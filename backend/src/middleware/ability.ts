@@ -28,32 +28,43 @@ export function defineAbilityFor(user: User): AppAbility {
       can('manage', 'all');
       break;
     case Role.Dev:
-      can(['create', 'read', 'update'], 'Report', { environment: 'development' });
-      can(['read', 'create', 'update'], 'Project', { environment: 'development' });
-      can('read', 'Organization');
-      can('read', 'User');
-      can('read', 'Map');
+      if (user.organizationId) {
+        const organization = { organizationId: user.organizationId };
+        can(['create', 'read', 'update'], 'Report', { ...organization, environment: 'development' });
+        can(['read', 'create', 'update'], 'Project', { ...organization, environment: 'development' });
+        can('read', 'Organization', { id: user.organizationId });
+        can('read', 'Map', organization);
+      }
       break;
     case Role.QA:
-      can('read', 'Report');
-      can('update', 'Report', { status: { $in: ['pending', 'validated'] } });
-      can('read', 'Organization');
-      can('read', 'Project');
-      can('read', 'Map');
+      if (user.organizationId) {
+        can('read', 'Report', { organizationId: user.organizationId });
+        can('update', 'Report', { organizationId: user.organizationId, status: 'pending' });
+        can('read', 'Organization', { id: user.organizationId });
+        can('read', 'Project', { organizationId: user.organizationId });
+        can('read', 'Map', { organizationId: user.organizationId });
+      }
       break;
     case Role.PO:
-      can('read', 'Report');
-      can('update', 'Report', { status: { $in: ['pending', 'validated'] } });
+      if (user.organizationId) {
+        can('read', 'Report', { organizationId: user.organizationId });
+        can('update', 'Report', {
+          organizationId: user.organizationId,
+          status: { $in: ['pending', 'validated'] },
+        });
+        can('read', 'Project', { organizationId: user.organizationId });
+        can('read', 'Organization', { id: user.organizationId });
+        can('read', 'Map', { organizationId: user.organizationId });
+      }
       cannot('delete', 'Report');
-      can('read', 'Project');
-      can('read', 'Organization');
-      can('read', 'Map');
       break;
     case Role.Guest:
-      can('create', 'Report');
-      can('read', 'Report', { ownerId: user.id });
-      can('read', 'Organization');
-      can('read', 'Map');
+      if (user.organizationId) {
+        can('create', 'Report', { organizationId: user.organizationId });
+        can('read', 'Report', { ownerId: user.id, organizationId: user.organizationId });
+        can('read', 'Organization', { id: user.organizationId });
+        can('read', 'Map', { organizationId: user.organizationId });
+      }
       break;
   }
 

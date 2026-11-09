@@ -18,17 +18,17 @@ Este documento define **qué operaciones** puede realizar cada **rol** dentro de
 
 ## Matriz mínima implementada
 
-La API centraliza la autorización en `backend/src/middleware/ability.ts`. Los ámbitos condicionados se evalúan sobre los atributos del recurso (`ownerId`, `organizationId`, `environment` y `status`); los endpoints de administración están en `/api/users` y `/api/organizations`.
+La API centraliza la autorización en `backend/src/middleware/ability.ts`. Admin tiene alcance global. El resto necesita un `organizationId` asignado y solo accede a recursos de ese organismo; además, invitados solo leen sus reportes (`ownerId`) y dev solo reportes/proyectos de desarrollo. QA y PO tienen transiciones de estado distintas. Los endpoints de administración están en `/api/users` y `/api/organizations`.
 
 | Rol | Reportes | Usuarios | Organismos | Proyectos / mapas |
 |---|---|---|---|---|
 | admin | CRUD global | CRUD global, incluido asignar rol | CRUD global | CRUD global |
-| dev | Crear, leer y actualizar solo en desarrollo | Solo lectura | Solo lectura | Crear, leer y actualizar solo en desarrollo; mapas lectura |
-| qa | Leer global; actualizar estados `pending` o `validated` | Sin acceso | Lectura | Lectura; mapas lectura |
-| po | Leer global; actualizar estados `pending` o `validated`; no borrar | Sin acceso | Lectura | Lectura; mapas lectura |
+| dev | Crear, leer y actualizar solo en desarrollo | Sin acceso | Solo lectura | Crear, leer y actualizar solo en desarrollo; mapas lectura |
+| qa | Leer global; pasar reportes `pending` a `validated` o `rejected` | Sin acceso | Lectura | Lectura; mapas lectura |
+| po | Leer global; aprobar/rechazar reportes `pending` o `validated`; no borrar | Sin acceso | Lectura | Lectura; mapas lectura |
 | guest | Crear; leer solo reportes propios (`ownerId`) | Sin acceso | Lectura | Sin acceso; mapas lectura |
 
-La matriz describe autorización, no persistencia: los endpoints de usuarios y organismos devuelven `501` hasta que se conecten sus repositorios. La API también depende de que cada reporte lleve los atributos de ámbito correspondientes. Las operaciones del admin sobre recursos no implementados quedan definidas en la política, pero no se exponen como funcionalidad persistente.
+La matriz describe autorización, no persistencia: los endpoints de usuarios y organismos devuelven `501` hasta que se conecten sus repositorios. El modelo de reportes también es provisional y no conserva datos entre peticiones. Los reportes deben guardar `ownerId`, `environment` y `organizationId`; un usuario sin organismo asignado recibe `403` en las rutas de reportes.
 
 ## Operaciones detalladas por recurso
 
@@ -36,7 +36,7 @@ La matriz describe autorización, no persistencia: los endpoints de usuarios y o
 |---|---|---|---|
 | **Reportes** (`/api/reports`) | **CREATE** | guest, dev | Validar según las *Reglas clave* (sección 1‑5 del documento `reglas_reportes.md`). |
 |  | **READ** | admin, dev, qa, po, guest (solo sus propios) | Los usuarios solo pueden leer sus propios reportes; el resto tiene vista global. |
-|  | **UPDATE** | admin, dev, po | Cambiar estado, añadir comentarios, actualizar datos. Debe pasar la validación de *criterios de aceptación*. |
+|  | **UPDATE** | admin, dev, qa, po | admin actualiza global; dev solo reportes de desarrollo; QA valida/rechaza pendientes; PO aprueba/rechaza pendientes o validados. |
 |  | **DELETE** | admin | Sólo administradores pueden eliminar permanentemente. |
 | **Usuarios** (`/api/users`) | **READ/UPDATE** | admin | Gestión de credenciales, asignación de roles. |
 | **Mapas / Layers** | **READ** | admin, dev, qa, po, guest | Consulta a OpenStreetMap y a la tabla `spatial_layers` en PostGIS. |
