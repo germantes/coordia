@@ -4,6 +4,7 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { createServer } from '../src/index.js';
 import { Role } from '../src/constants/roles.js';
+import { Report } from '../src/models/report.js';
 
 const secret = 'insecure-dev-secret';
 let server: Server;
@@ -23,12 +24,12 @@ afterAll(async () => {
   if (server) await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
 });
 
-function tokenForGuest() {
+function tokenForGuest(id = `test-user-${crypto.randomUUID()}`, organizationId = 'test-organization') {
   return jwt.sign({
-    id: `test-user-${crypto.randomUUID()}`,
+    id,
     email: 'citizen@example.test',
     role: Role.Guest,
-    organizationId: 'test-organization',
+    organizationId,
   }, secret);
 }
 
@@ -92,5 +93,114 @@ describe('POST /api/reports', () => {
     });
 
     expect(response.status).toBe(403);
+  });
+});
+
+describe('nearby reports and citizen responses', () => {
+  async function createReport(ownerId = `author-${crypto.randomUUID()}`) {
+    const response = await fetch(`${baseUrl}/api/reports`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest(ownerId)}` },
+      body: JSON.stringify(reportBody),
+    });
+    expect(response.status).toBe(201);
+    return await response.json() as { id: string };
+  }
+
+  function locationObservation(longitude = reportBody.location.longitude) {
+    return {
+      latitude: reportBody.location.latitude,
+      longitude,
+      accuracyMeters: 24,
+      capturedAt: new Date().toISOString(),
+    };
+  }
+
+  it('lists nearby pending reports without exposing owner or exact coordinates', async () => {
+    const report = await createReport();
+    const response = await fetch(`${baseUrl}/api/reports/nearby`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest('nearby-user')}` },
+      body: JSON.stringify({ location: locationObservation() }),
+    });
+    const body = await response.json() as { reports: Record<string, unknown>[] };
+
+    expect(response.status).toBe(200);
+    expect(body.reports).toContainEqual(expect.objectContaining({ id: report.id, distanceMeters: 0 }));
+    const listed = body.reports.find((item) => item.id === report.id)!;
+    expect(listed).not.toHaveProperty('ownerId');
+    expect(listed).not.toHaveProperty('location');
+  });
+
+  it('prevents duplicate counts and updates a response when the user changes their mind', async () => {
+    const report = await createReport();
+    const token = tokenForGuest('responding-user');
+    const submitResponse = (responseValue: 'confirm' | 'question') => fetch(`${baseUrl}/api/reports/${report.id}/response`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ response: responseValue, location: locationObservation() }),
+    });
+
+    const first = await submitResponse('confirm');
+    const firstBody = await first.json() as { counts: { confirm: number; question: number }; changed: boolean };
+    expect(first.status).toBe(200);
+    expect(firstBody.changed).toBe(true);
+    expect(firstBody.counts).toEqual({ confirm: 1, question: 0 });
+
+    const repeated = await submitResponse('confirm');
+    const repeatedBody = await repeated.json() as typeof firstBody;
+    expect(repeatedBody.changed).toBe(false);
+    expect(repeatedBody.counts).toEqual({ confirm: 1, question: 0 });
+
+    const changed = await submitResponse('question');
+    const changedBody = await changed.json() as { counts: { confirm: number; question: number }; changed: boolean };
+    expect(changedBody.changed).toBe(true);
+    expect(changedBody.counts).toEqual({ confirm: 0, question: 1 });
+  });
+
+  it('rejects self-responses and responses from outside the proximity radius', async () => {
+    const ownReport = await createReport('same-citizen');
+    const ownResponse = await fetch(`${baseUrl}/api/reports/${ownReport.id}/response`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest('same-citizen')}` },
+      body: JSON.stringify({ response: 'confirm', location: locationObservation() }),
+    });
+    expect(ownResponse.status).toBe(403);
+
+    const otherReport = await createReport();
+    const distantResponse = await fetch(`${baseUrl}/api/reports/${otherReport.id}/response`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest('distant-citizen')}` },
+      body: JSON.stringify({ response: 'confirm', location: locationObservation(-3.71) }),
+    });
+    expect(distantResponse.status).toBe(422);
+  });
+
+  it('requires an authenticated guest with an organization assignment', async () => {
+    const response = await fetch(`${baseUrl}/api/reports/nearby`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ location: locationObservation() }),
+    });
+    expect(response.status).toBe(401);
+  });
+
+  it('rejects responses from another organization and after report closure', async () => {
+    const report = await createReport();
+    const otherOrganizationResponse = await fetch(`${baseUrl}/api/reports/${report.id}/response`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest('other-org-user', 'other-org')}` },
+      body: JSON.stringify({ response: 'confirm', location: locationObservation() }),
+    });
+    expect(otherOrganizationResponse.status).toBe(403);
+
+    const storedReport = await Report.findByPk(report.id);
+    await storedReport?.update({ status: 'validated' });
+    const closedResponse = await fetch(`${baseUrl}/api/reports/${report.id}/response`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest('closed-report-user')}` },
+      body: JSON.stringify({ response: 'question', location: locationObservation() }),
+    });
+    expect(closedResponse.status).toBe(409);
   });
 });

@@ -4,8 +4,69 @@ import { Report } from '../models/report.js';
 import { checkAbility, defineAbilityFor, subject } from '../middleware/ability.js';
 import { Role } from '../constants/roles.js';
 import { validateCreateReport } from '../validation/report.js';
+import { ReportResponse } from '../models/report-response.js';
+import {
+  distanceBetweenMeters,
+  getLocationQualityError,
+  MAX_RESPONSE_DISTANCE_METERS,
+  validateLocationObservation,
+  validateSubmitReportResponse,
+} from '../validation/report-response.js';
 
 const router = Router();
+
+function requireCitizen(req: Request, res: Response) {
+  const user = req.user;
+  if (!user || user.id === 'guest') {
+    res.status(401).json({ error: 'Inicia sesión para responder a reportes' });
+    return null;
+  }
+  if (user.role !== Role.Guest) {
+    res.status(403).json({ error: 'Solo los ciudadanos pueden confirmar o cuestionar reportes' });
+    return null;
+  }
+  if (!user.organizationId) {
+    res.status(403).json({ error: 'Tu usuario no tiene un organismo asignado' });
+    return null;
+  }
+  return user;
+}
+
+/** List nearby pending reports without exposing reporter identity or exact coordinates. */
+router.post('/nearby', async (req: Request, res: Response) => {
+  const user = requireCitizen(req, res);
+  if (!user) return;
+
+  const validation = validateLocationObservation(req.body?.location);
+  if (!validation.valid) {
+    return res.status(400).json({ error: 'Ubicación no válida', fields: validation.errors });
+  }
+  const qualityError = getLocationQualityError(validation.location);
+  if (qualityError) return res.status(422).json({ error: qualityError });
+
+  const reports = await Report.findAll({ where: { organizationId: user.organizationId, status: 'pending' } });
+  const visibleReports = [];
+  for (const report of reports) {
+    if (!report.id || !report.location || report.ownerId === user.id) continue;
+    const distanceMeters = distanceBetweenMeters(validation.location, report.location);
+    if (distanceMeters > MAX_RESPONSE_DISTANCE_METERS) continue;
+    const [myResponse, counts] = await Promise.all([
+      ReportResponse.find(String(report.id), user.id),
+      ReportResponse.counts(String(report.id)),
+    ]);
+    visibleReports.push({
+      id: report.id,
+      category: report.category,
+      description: report.description,
+      createdAt: report.createdAt,
+      distanceMeters: Math.round(distanceMeters),
+      response: myResponse?.response ?? null,
+      counts,
+    });
+  }
+  visibleReports.sort((first, second) => first.distanceMeters - second.distanceMeters);
+  return res.json({ radiusMeters: MAX_RESPONSE_DISTANCE_METERS, reports: visibleReports });
+});
 
 /** CREATE */
 router.post('/', async (req: Request, res: Response) => {
@@ -31,6 +92,54 @@ router.post('/', async (req: Request, res: Response) => {
   }
   const report = await Report.create(data);
   res.status(201).json(report);
+});
+
+/** Record or change a citizen's single response to a pending report. */
+router.put('/:id/response', async (req: Request, res: Response) => {
+  const user = requireCitizen(req, res);
+  if (!user) return;
+
+  const validation = validateSubmitReportResponse(req.body);
+  if (!validation.valid) {
+    return res.status(400).json({ error: 'Respuesta no válida', fields: validation.errors });
+  }
+  const qualityError = getLocationQualityError(validation.data.location);
+  if (qualityError) return res.status(422).json({ error: qualityError });
+
+  const report = await Report.findByPk(req.params.id);
+  if (!report) return res.status(404).json({ error: 'Reporte no encontrado' });
+  if (report.organizationId !== user.organizationId) {
+    return res.status(403).json({ error: 'No tienes acceso a este reporte' });
+  }
+  if (report.ownerId === user.id) {
+    return res.status(403).json({ error: 'No puedes responder a tu propio reporte' });
+  }
+  if (report.status !== 'pending') {
+    return res.status(409).json({ error: 'El reporte ya no acepta respuestas' });
+  }
+  if (!report.location) {
+    return res.status(409).json({ error: 'El reporte no tiene una ubicación verificable' });
+  }
+
+  const distanceMeters = distanceBetweenMeters(validation.data.location, report.location);
+  if (distanceMeters > MAX_RESPONSE_DISTANCE_METERS) {
+    return res.status(422).json({ error: 'Debes estar a 500 metros o menos del incidente para responder' });
+  }
+
+  const { record, changed } = await ReportResponse.upsert(
+    req.params.id,
+    user.id,
+    validation.data.response,
+    new Date().toISOString(),
+  );
+  const counts = await ReportResponse.counts(req.params.id);
+  return res.json({
+    reportId: req.params.id,
+    response: record.response,
+    changed,
+    updatedAt: record.updatedAt,
+    counts,
+  });
 });
 
 /** READ ALL (admin, dev, qa, po) */
