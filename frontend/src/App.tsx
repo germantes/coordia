@@ -1,4 +1,4 @@
-import { FormEvent, useState } from 'react';
+import React, { type FormEvent, useState } from 'react';
 import LocationPicker, { type Coordinates } from './LocationPicker.js';
 
 const categories = [
