@@ -29,3 +29,4 @@ coordia/
 - [Roles y permisos (`docs/roles_acceso.md`)](docs/roles_acceso.md)
 - [Reglas de validación de reportes (`docs/reglas_reportes.md`)](docs/reglas_reportes.md)
 - [Diseño de creación de reportes (`docs/crear_reporte.md`)](docs/crear_reporte.md)
+- [Reglas para confirmar o cuestionar reportes (`docs/confirmacion_reportes.md`)](docs/confirmacion_reportes.md)

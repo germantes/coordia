@@ -16,6 +16,54 @@ interface ApiError {
   fields?: Record<string, string>;
 }
 
+interface LocationObservation extends Coordinates {
+  accuracyMeters: number;
+  capturedAt: string;
+}
+
+interface NearbyReport {
+  id: string | number;
+  category: string;
+  description: string;
+  createdAt: string;
+  distanceMeters: number;
+  response: 'confirm' | 'question' | null;
+  counts: { confirm: number; question: number };
+}
+
+function getLocationObservation(): Promise<LocationObservation> {
+  return new Promise((resolve, reject) => {
+    if (!navigator.geolocation) {
+      reject(new Error('Este navegador no permite obtener la ubicación.'));
+      return;
+    }
+    navigator.geolocation.getCurrentPosition(
+      ({ coords, timestamp }) => resolve({
+        latitude: coords.latitude,
+        longitude: coords.longitude,
+        accuracyMeters: coords.accuracy,
+        capturedAt: new Date(timestamp).toISOString(),
+      }),
+      () => reject(new Error('No se pudo obtener tu ubicación. Revisa los permisos e inténtalo de nuevo.')),
+      { enableHighAccuracy: true, maximumAge: 0, timeout: 10_000 },
+    );
+  });
+}
+
+function getAccessToken(): string {
+  const token = sessionStorage.getItem('coordia.accessToken');
+  if (!token) throw new Error('Inicia sesión para ver y responder reportes cercanos.');
+  return token;
+}
+
+function getResponseError(body: ApiError, status: number): string {
+  if (status === 401) return 'Inicia sesión para responder a reportes.';
+  if (status === 403) return body.error ?? 'No tienes acceso a este reporte o no tienes un organismo asignado.';
+  if (status === 409) return body.error ?? 'Este reporte ya no acepta respuestas.';
+  if (status === 422) return body.error ?? 'Tu ubicación no cumple los requisitos de proximidad.';
+  return body.error ?? 'No se pudo completar la operación. Inténtalo de nuevo.';
+}
+
 function localDateTimeToIso(value: string): string | undefined {
   if (!value) return undefined;
   const date = new Date(value);
@@ -32,6 +80,59 @@ export default function App() {
   const [busy, setBusy] = useState(false);
   const [locating, setLocating] = useState(false);
   const [success, setSuccess] = useState<{ id: string | number; status: string } | null>(null);
+  const [nearbyReports, setNearbyReports] = useState<NearbyReport[]>([]);
+  const [nearbyLoaded, setNearbyLoaded] = useState(false);
+  const [nearbyBusy, setNearbyBusy] = useState(false);
+  const [activeResponseReportId, setActiveResponseReportId] = useState<string | number | null>(null);
+  const [nearbyError, setNearbyError] = useState('');
+
+  async function loadNearbyReports() {
+    setNearbyBusy(true);
+    setNearbyError('');
+    try {
+      const token = getAccessToken();
+      const currentLocation = await getLocationObservation();
+      const response = await fetch(`${apiBase}/api/reports/nearby`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ location: currentLocation }),
+      });
+      const body = await response.json() as ApiError & { reports?: NearbyReport[] };
+      if (!response.ok) throw new Error(getResponseError(body, response.status));
+      setNearbyReports(body.reports ?? []);
+      setNearbyLoaded(true);
+    } catch (error) {
+      setNearbyError(error instanceof Error ? error.message : 'No se pudieron cargar los reportes cercanos.');
+    } finally {
+      setNearbyBusy(false);
+    }
+  }
+
+  async function answerReport(reportId: string | number, answer: 'confirm' | 'question') {
+    setActiveResponseReportId(reportId);
+    setNearbyError('');
+    try {
+      const token = getAccessToken();
+      const currentLocation = await getLocationObservation();
+      const response = await fetch(`${apiBase}/api/reports/${encodeURIComponent(reportId)}/response`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ response: answer, location: currentLocation }),
+      });
+      const body = await response.json() as ApiError & {
+        response?: 'confirm' | 'question';
+        counts?: NearbyReport['counts'];
+      };
+      if (!response.ok) throw new Error(getResponseError(body, response.status));
+      setNearbyReports((reports) => reports.map((report) => report.id === reportId
+        ? { ...report, response: body.response ?? answer, counts: body.counts ?? report.counts }
+        : report));
+    } catch (error) {
+      setNearbyError(error instanceof Error ? error.message : 'No se pudo guardar tu respuesta.');
+    } finally {
+      setActiveResponseReportId(null);
+    }
+  }
 
   function locateMe() {
     if (!navigator.geolocation) {
@@ -170,6 +271,54 @@ export default function App() {
             <button className="submit-button" type="submit" disabled={busy}>{busy ? 'Enviando…' : 'Enviar reporte'}</button>
           </div>
         </form>
+
+        <section className="nearby-section" aria-labelledby="nearby-heading">
+          <div className="nearby-heading-row">
+            <div>
+              <p className="eyebrow">PARTICIPA EN TU ENTORNO</p>
+              <h2 id="nearby-heading">Reportes cerca de ti</h2>
+              <p className="intro-copy">Puedes confirmar o cuestionar reportes pendientes a menos de 500 metros.</p>
+            </div>
+            <button className="location-button nearby-refresh" type="button" onClick={loadNearbyReports} disabled={nearbyBusy}>
+              {nearbyBusy ? 'Buscando…' : '◎ Buscar cerca de mí'}
+            </button>
+          </div>
+
+          {nearbyError && <div className="error-banner nearby-message" role="alert">{nearbyError}</div>}
+          {nearbyLoaded && nearbyReports.length === 0 && !nearbyError && (
+            <div className="empty-nearby">No hay reportes pendientes cerca de tu ubicación.</div>
+          )}
+          <div className="nearby-list">
+            {nearbyReports.map((report) => (
+              <article className="nearby-card" key={report.id}>
+                <div className="nearby-card-meta">
+                  <span>{categories.find(([value]) => value === report.category)?.[1] ?? report.category}</span>
+                  <span>{report.distanceMeters} m de ti</span>
+                </div>
+                <p className="nearby-description">{report.description}</p>
+                <div className="response-controls" aria-label="Tu respuesta a este reporte">
+                  <button
+                    type="button"
+                    className={`response-button${report.response === 'confirm' ? ' selected' : ''}`}
+                    disabled={activeResponseReportId !== null || report.response === 'confirm'}
+                    onClick={() => answerReport(report.id, 'confirm')}
+                  >
+                    {report.response === 'question' ? 'Cambiar a confirmar' : '✓ Confirmar'} ({report.counts.confirm})
+                  </button>
+                  <button
+                    type="button"
+                    className={`response-button question-button${report.response === 'question' ? ' selected' : ''}`}
+                    disabled={activeResponseReportId !== null || report.response === 'question'}
+                    onClick={() => answerReport(report.id, 'question')}
+                  >
+                    {report.response === 'confirm' ? 'Cambiar a cuestionar' : 'Cuestionar'} ({report.counts.question})
+                  </button>
+                </div>
+              </article>
+            ))}
+          </div>
+          <p className="nearby-privacy">La ubicación se usa para comprobar la proximidad y no se muestra en los reportes.</p>
+        </section>
       </section>
       <footer className="page-footer">COORDIA · Información para mejorar nuestro entorno</footer>
     </main>
