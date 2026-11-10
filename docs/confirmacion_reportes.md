@@ -1,6 +1,6 @@
 # HU-04 — Reglas para confirmar o cuestionar reportes
 
-Este documento concreta e implementa la subtarea de HU-04 sobre proximidad, duplicados y cambios de respuesta. Los umbrales definidos se usan en la implementación y quedan sujetos a confirmación de producto.
+Este documento concreta e implementa la subtarea de HU-04 sobre proximidad, duplicados y cambios de respuesta. Los umbrales iniciales aceptados son 500 m, precisión de 100 m y antigüedad máxima de ubicación de 5 minutos.
 
 ## 1. Quién puede responder
 
@@ -18,14 +18,14 @@ Este documento concreta e implementa la subtarea de HU-04 sobre proximidad, dupl
 - Si la persona no concede acceso a ubicación o está fuera del radio, no se registra la respuesta y se explica el motivo.
 - Las coordenadas usadas para comprobar proximidad no se conservan ni se muestran a otras personas. Se guarda el resultado de la comprobación y su fecha para auditoría.
 
-Los valores implementados de 500 m, 100 m y 5 minutos son umbrales iniciales y producto debe confirmarlos. La ubicación aportada por un navegador no prueba por sí sola que no haya sido falsificada; la regla sirve como control funcional, no como prueba antifraude.
+Los valores implementados de 500 m, 100 m y 5 minutos son los umbrales iniciales aceptados para esta tarea. La ubicación aportada por un navegador no prueba por sí sola que no haya sido falsificada; la regla sirve como control funcional, no como prueba antifraude.
 
 ## 3. Duplicados y conteo
 
 - Cada persona tiene como máximo **una respuesta activa por reporte**, identificada por la combinación `reportId + userId`.
 - La respuesta puede ser **confirmar** o **cuestionar**. Repetir la misma respuesta (por doble clic o reintento de red) no crea otra aportación ni incrementa el contador.
 - Los contadores reflejan respuestas activas distintas, no el número de envíos ni el historial de cambios.
-- La detección de reportes que describen el mismo incidente sigue las reglas compartidas de `reglas_reportes.md` (similitud Jaccard y coincidencia geográfica/temporal). Una coincidencia probable se agrupa o se deriva a revisión; no elimina automáticamente una respuesta.
+- La detección de reportes que describen el mismo incidente sigue la regla única de `reglas_reportes.md`: misma área geográfica, creación dentro de 24 h y Jaccard textual ≥ 0,85, cumpliéndose las tres condiciones. La cercanía de 500 m usada para encontrar reportes que una persona puede confirmar o cuestionar no es el criterio de duplicidad. El plazo de revisión de 2 h para prioridad `high` es independiente. Esta tarea implementa las respuestas de ciudadanos, no la detección/agrupación automática de reportes duplicados.
 
 ## 4. Cambiar una respuesta
 
@@ -71,4 +71,4 @@ Respuestas HTTP: `200` con la respuesta actual y los contadores; `400` por datos
 
 - El flujo se limita al rol ciudadano autenticado (`guest`) con organismo asignado. La matriz general sigue restringiendo la lectura de reportes ajenos; el nuevo endpoint de cercanía es una excepción acotada y devuelve campos no sensibles.
 - Las respuestas e historial se guardan en memoria, igual que los reportes. La unicidad funciona durante la ejecución del proceso, pero se pierde al reiniciarlo y no coordina varias instancias; falta persistencia para producción.
-- Producto debe confirmar los umbrales de proximidad, precisión y antigüedad de ubicación. El flujo requiere una identidad autenticada con `userId` estable y un `organizationId` en el token.
+- El flujo requiere una identidad autenticada con `userId` estable y un `organizationId` en el token. La detección automática de duplicados sigue pendiente de implementación según `reglas_reportes.md`.

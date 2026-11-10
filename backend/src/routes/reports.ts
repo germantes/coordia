@@ -83,6 +83,7 @@ router.post('/', async (req: Request, res: Response) => {
   const data = {
     ...validation.data,
     ...(user.role === Role.Admin ? {} : { organizationId: user.organizationId }),
+    ...(user.role === Role.Dev ? { environment: 'development' as const } : {}),
     ownerId: user.id,
     status: 'pending',
     createdAt: new Date().toISOString(),
@@ -142,46 +143,52 @@ router.put('/:id/response', async (req: Request, res: Response) => {
   });
 });
 
-/** READ ALL (admin, dev, qa, po) */
-router.get('/', checkAbility('read', 'Report'), async (req: Request, res: Response) => {
-  const user = req.user!;
+/** READ REPORTS WITH THE CALLER'S ACTUAL ROLE AND RESOURCE SCOPE */
+router.get('/', async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) return res.status(401).json({ error: 'Autenticación requerida' });
   if (user.role !== Role.Admin && !user.organizationId) {
     return res.status(403).json({ error: 'El usuario no tiene un organismo asignado' });
   }
-  const ability = defineAbilityFor(req.user!);
-  const otherOwner = '__another_user__';
-  const organizationId = user.organizationId;
-  const canReadDevelopment = ability.can('read', subject('Report', {
-    ownerId: otherOwner,
-    environment: 'development',
-    organizationId,
-  }) as never);
-  const canReadProduction = ability.can('read', subject('Report', {
-    ownerId: otherOwner,
-    environment: 'production',
-    organizationId,
-  }) as never);
+  const ability = defineAbilityFor(user);
+  const probe = {
+    ownerId: user.role === Role.Guest ? user.id : '__another_user__',
+    organizationId: user.organizationId,
+    environment: user.role === Role.Dev ? 'development' : 'production',
+    status: 'pending',
+  };
+  if (!ability.can('read', subject('Report', probe) as never)) {
+    return res.status(403).json({ error: 'Permiso denegado para consultar reportes' });
+  }
   const where = user.role === Role.Admin
     ? undefined
     : {
-        organizationId,
+        organizationId: user.organizationId,
         ...(user.role === Role.Guest ? { ownerId: user.id } : {}),
-        ...(canReadDevelopment && !canReadProduction ? { environment: 'development' } : {}),
+        ...(user.role === Role.Dev ? { environment: 'development' } : {}),
       };
   const options = where ? { where } : {};
   const reports = await Report.findAll(options);
   res.json(reports);
 });
 
-/** READ OWN */
-router.get('/mi', checkAbility('read', 'Report'), async (req: Request, res: Response) => {
-  const user = req.user!;
+/** READ THE CALLER'S REPORTS */
+router.get('/mi', async (req: Request, res: Response) => {
+  const user = req.user;
+  if (!user) return res.status(401).json({ error: 'Autenticación requerida' });
   if (user.role !== Role.Admin && !user.organizationId) {
     return res.status(403).json({ error: 'El usuario no tiene un organismo asignado' });
   }
-  const reports = await Report.findAll({
-    where: { ownerId: user.id, ...(user.role === Role.Admin ? {} : { organizationId: user.organizationId }) },
-  });
+  const ability = defineAbilityFor(user);
+  const where = {
+    ownerId: user.id,
+    ...(user.role === Role.Admin ? {} : { organizationId: user.organizationId }),
+    ...(user.role === Role.Dev ? { environment: 'development' } : {}),
+  };
+  if (!ability.can('read', subject('Report', where) as never)) {
+    return res.status(403).json({ error: 'Permiso denegado para consultar reportes propios' });
+  }
+  const reports = await Report.findAll({ where });
   res.json(reports);
 });
 

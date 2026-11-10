@@ -1,97 +1,39 @@
-# Roles y permisos en COORDIA
+# Matriz de roles, permisos y ámbitos
 
-Este documento define **qué operaciones** puede realizar cada **rol** dentro del proyecto y **sobre qué datos u organismos** tienen acceso.  Está pensado para ser usado por el equipo de desarrollo, QA y gestión de producto, y para servir de referencia al crear la configuración de autorización en la API.
+Esta es la definición única de perfiles de COORDIA. La API usa cinco valores técnicos de `role`, agrupados en tres perfiles funcionales: ciudadano, miembro de un organismo y administrador.
 
----
+## Perfiles funcionales
 
-## Tabla de roles
-
-| Rol | Operaciones permitidas | Datos/Entidades accesibles | Comentarios |
+| Perfil | Roles de API | Ámbito | Permisos principales |
 |---|---|---|---|
-| **Administrador** (admin) | • Crear, leer, actualizar y borrar cualquier recurso. <br>• Gestionar usuarios y asignar roles. <br>• Configurar la infraestructura (base de datos, CI/CD). | • Todos los **reportes** (`reports`). <br>• **Usuarios** (`users`). <br>• **Proyectos**, **zonas**, **configuración**. <br>• Acceso a **PostgreSQL**, **PostGIS**, **OpenStreetMap** (API externa). | Rol de máxima confianza. Se usa para despliegues y mantenimiento. |
-| **Desarrollador** (dev) | • Crear, leer y actualizar código (frontend & backend). <br>• Ejecutar pruebas unitarias y de integración. <br>• Crear y modificar reportes de prueba. | • **Reportes** en modo *draft* (no publicados). <br>• **Entidades de dominio** (proyectos, zonas) en entorno de desarrollo. <br>• Acceso de lectura/escritura a la base de datos *dev*. | No puede borrar usuarios ni cambiar permisos de otros. |
-| **Analista / QA** (qa) | • Leer todos los reportes. <br>• Cambiar estado de un reporte (p.ej., *pendiente ➜ validado*). <br>• Ejecutar pruebas automatizadas contra la API. | • **Reportes** (todos los estados). <br>• **Mapas** (consulta a OSM). <br>• **Logs** de aplicación. | No tiene permisos de escritura en la base de datos productiva, solo lectura. |
-| **Product Owner** (po) | • Leer y comentar reportes. <br>• Aprobar o rechazar reportes según las reglas de negocio. <br>• Gestionar backlog en ClickUp (fuera del código). | • **Reportes** (solo lectura + *approval*). <br>• **Entidades de negocio** (proyectos, prioridades). | Puede cambiar el campo `status` del reporte a *approved*/*rejected* mediante la API. |
-| **Usuario externo** (guest) | • Crear un nuevo reporte (vía UI). <br>• Ver sus propios reportes y su estado. | • **Reportes** creados por él/ella. <br>• **Datos de mapa** (consulta a OSM para visualización). | No ve ni modifica reportes de otros usuarios. |
+| **Ciudadano** | `guest` | Un organismo asignado. | Crear reportes y consultar los propios. Puede ver una ficha sanitizada de reportes pendientes cercanos de su organismo para confirmarlos o cuestionarlos, sin ver quién los creó ni sus coordenadas exactas. No puede cambiar el estado del reporte ni borrarlo. |
+| **Miembro de un organismo** | `dev`, `qa`, `po` | Solo el `organizationId` asignado. | Las operaciones dependen del subrol técnico, descrito en la siguiente tabla. Ninguno tiene acceso global ni administra usuarios u organismos. |
+| **Administrador** | `admin` | Global. | Gestionar recursos y permisos en todos los organismos. |
 
----
+Los roles `dev`, `qa` y `po` son permisos técnicos dentro del perfil **miembro de un organismo**, no ámbitos globales. La única excepción al aislamiento por organismo es `admin`.
 
-## Matriz mínima implementada
+## Matriz de operaciones
 
-La API centraliza la autorización en `backend/src/middleware/ability.ts`. Admin tiene alcance global. El resto necesita un `organizationId` asignado y solo accede a recursos de ese organismo; además, invitados solo leen sus reportes (`ownerId`) y dev solo reportes/proyectos de desarrollo. QA y PO tienen transiciones de estado distintas. Los endpoints de administración están en `/api/users` y `/api/organizations`.
-
-| Rol | Reportes | Usuarios | Organismos | Proyectos / mapas |
-|---|---|---|---|---|
-| admin | CRUD global | CRUD global, incluido asignar rol | CRUD global | CRUD global |
-| dev | Crear, leer y actualizar solo en desarrollo | Sin acceso | Solo lectura | Crear, leer y actualizar solo en desarrollo; mapas lectura |
-| qa | Leer global; pasar reportes `pending` a `validated` o `rejected` | Sin acceso | Lectura | Lectura; mapas lectura |
-| po | Leer global; aprobar/rechazar reportes `pending` o `validated`; no borrar | Sin acceso | Lectura | Lectura; mapas lectura |
-| guest | Crear; leer solo reportes propios (`ownerId`) | Sin acceso | Lectura | Sin acceso; mapas lectura |
-
-La matriz describe autorización, no persistencia: los endpoints de usuarios y organismos devuelven `501` hasta que se conecten sus repositorios. El modelo de reportes también es provisional y no conserva datos entre peticiones. Los reportes deben guardar `ownerId`, `environment` y `organizationId`; un usuario sin organismo asignado recibe `403` en las rutas de reportes.
-
-## Operaciones detalladas por recurso
-
-| Recurso | Acción | Roles que pueden ejecutar | Reglas de negocio asociadas |
+| Recurso / operación | Ciudadano (`guest`) | Miembro de organismo (`dev`, `qa`, `po`) | Administrador (`admin`) |
 |---|---|---|---|
-| **Reportes** (`/api/reports`) | **CREATE** | guest, dev | Validar según las *Reglas clave* (sección 1‑5 del documento `reglas_reportes.md`). |
-|  | **READ** | admin, dev, qa, po, guest (solo sus propios) | Los usuarios solo pueden leer sus propios reportes; el resto tiene vista global. |
-|  | **UPDATE** | admin, dev, qa, po | admin actualiza global; dev solo reportes de desarrollo; QA valida/rechaza pendientes; PO aprueba/rechaza pendientes o validados. |
-|  | **DELETE** | admin | Sólo administradores pueden eliminar permanentemente. |
-| **Usuarios** (`/api/users`) | **READ/UPDATE** | admin | Gestión de credenciales, asignación de roles. |
-| **Mapas / Layers** | **READ** | admin, dev, qa, po, guest | Consulta a OpenStreetMap y a la tabla `spatial_layers` en PostGIS. |
-| **Configuración** (CI/CD, .env) | **READ/WRITE** | admin | Sólo administradores pueden modificar variables de entorno y pipelines. |
+| **Crear reportes** | Sí; el servidor asigna autor y organismo. | `dev`, solo en entorno de desarrollo. | Sí, en cualquier ámbito. |
+| **Leer reportes** | Propios. Además, `/api/reports/nearby` devuelve campos limitados de reportes pendientes del mismo organismo y dentro del radio permitido. | Solo del organismo asignado. `dev` solo lee reportes de desarrollo. | Todos los organismos y entornos. |
+| **Cambiar reportes** | No. Puede enviar o cambiar su respuesta de confirmar/cuestionar mientras el reporte esté pendiente, si cumple las reglas de HU-04. | `dev`: reportes de desarrollo. `qa`: solo `pending` → `validated` o `rejected`. `po`: `pending` o `validated` → `approved` o `rejected`. | Cualquier campo y estado. |
+| **Borrar reportes** | No. | No. | Sí. |
+| **Usuarios y roles** | Sin acceso. | Sin acceso. | Gestión global. |
+| **Organismos** | Solo lectura del organismo asignado. | Solo lectura del organismo asignado. | Gestión global. |
+| **Proyectos** | Sin acceso. | `dev`: crear, leer y actualizar en desarrollo. `qa` y `po`: lectura dentro del organismo. | Gestión global. |
+| **Mapas** | Lectura dentro del organismo asignado. | Lectura dentro del organismo asignado. | Acceso global. |
+| **Configuración** | Sin acceso. | Sin acceso. | Gestión global. |
 
----
+## Reglas de ámbito y datos
 
-## Acceso a organismos externos
+- Todo usuario que no sea `admin` necesita un `organizationId` asignado; si falta, las rutas protegidas por ámbito responden `403`.
+- La API deriva `ownerId`, `organizationId`, entorno y estado inicial del reporte desde la identidad y las reglas del servidor. El cliente no puede elegirlos libremente.
+- La respuesta de `/api/reports/nearby` contiene solo categoría, descripción, fecha, distancia aproximada, respuesta del usuario y contadores. No expone identidad del autor ni coordenadas exactas.
+- El endpoint de cercanía es una excepción acotada a la lectura propia del ciudadano; no concede acceso a la ficha completa ni una lista global de reportes.
+- Las respuestas por organismo están definidas en `backend/src/middleware/ability.ts`; el acceso ciudadano a reportes cercanos se limita en `backend/src/routes/reports.ts`.
 
-| Organismo | Tipo de acceso | Roles que pueden usarlo |
-|---|---|---|
-| **PostgreSQL + PostGIS** | Conexión directa a base de datos (SQL) | admin (producción), dev (dev), qa (solo lectura) |
-| **OpenStreetMap API** | GET de tiles y datos geojson | admin, dev, qa, po, guest (solo lectura) |
-| **GitHub Actions** | Ejecutar CI/CD pipelines | admin (configuración) |
+## Estado de persistencia
 
----
-
-## Implementación práctica (ejemplo)
-
-En el **backend** (`src/middleware/auth.ts`) se pueden mapear los roles a permisos usando *express‑jwt* y *casl*:
-```ts
-import { defineAbility } from '@casl/ability';
-
-export function defineUserAbility(user) {
-  const { role } = user;
-  const { can, cannot, build } = new AbilityBuilder(Ability);
-
-  if (role === 'admin') {
-    can('manage', 'all');
-  } else if (role === 'dev') {
-    can(['create', 'read', 'update'], ['Report', 'Project']);
-    cannot('delete', 'User');
-  } else if (role === 'qa') {
-    can('read', 'Report');
-    can('update', 'Report', { status: { $in: ['pending', 'validated'] } });
-  } else if (role === 'po') {
-    can(['read', 'update'], 'Report');
-    cannot(['delete'], 'Report');
-  } else if (role === 'guest') {
-    can('create', 'Report');
-    can('read', 'Report', { ownerId: user.id });
-  }
-
-  return build();
-}
-```
-Este ejemplo muestra cómo **centralizar** la lógica de autorización y poder añadir nuevas reglas de manera sencilla.
-
----
-
-## Próximos pasos
-1. **Revisar** este documento con el equipo de Seguridad y ajustarlo a cualquier normativa interna. 
-2. **Implementar** la capa de autorización en el backend usando la tabla anterior como referencia. 
-3. **Añadir** el markdown a la documentación del proyecto (`docs/roles_acceso.md`). 
-4. **Crear tests** de autorización (Supertest) para asegurar que cada rol cumple sus límites.
-
-> **Nota:** Este archivo está pensado para evolucionar. Cada cambio deberá abrirse en un Pull Request y seguir el proceso de revisión descrito en `reglas_reportes.md`.
-
+Los reportes y respuestas se mantienen en memoria durante la ejecución del servidor y se pierden al reiniciarlo. Los endpoints de usuarios y organismos aún requieren repositorios persistentes. Esta matriz describe autorización; no implica que esas operaciones ya cuenten con almacenamiento.

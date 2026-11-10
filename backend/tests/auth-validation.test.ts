@@ -40,6 +40,22 @@ describe('account input validation', () => {
     }
   });
 
+  it('rejects a password made only of spaces even when it meets the minimum length', () => {
+    const password = ' '.repeat(12);
+    const result = validateRegisterInput({
+      displayName: 'Laura',
+      email: 'laura@example.com',
+      password,
+      confirmPassword: password,
+    });
+
+    expect(result.success).toBe(false);
+    if (!result.success) {
+      expect(result.errors.password).toContain('solo por espacios');
+      expect(result.errors.password).toContain('no se recorta');
+    }
+  });
+
   it('rejects non-object registration payloads', () => {
     expect(validateRegisterInput(null).success).toBe(false);
     expect(validateRegisterInput([]).success).toBe(false);
@@ -54,5 +70,6 @@ describe('account input validation', () => {
   it('rejects login passwords that are missing or exceed the maximum length', () => {
     expect(validateLoginInput({ email: 'user@example.com', password: '' }).success).toBe(false);
     expect(validateLoginInput({ email: 'user@example.com', password: 'x'.repeat(129) }).success).toBe(false);
+    expect(validateLoginInput({ email: 'user@example.com', password: ' '.repeat(12) }).success).toBe(false);
   });
 });
