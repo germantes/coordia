@@ -3,21 +3,30 @@ import { Router, Request, Response } from 'express';
 import { Report } from '../models/report.js';
 import { checkAbility, defineAbilityFor, subject } from '../middleware/ability.js';
 import { Role } from '../constants/roles.js';
+import { validateCreateReport } from '../validation/report.js';
 
 const router = Router();
 
 /** CREATE */
 router.post('/', async (req: Request, res: Response) => {
-  const user = req.user!;
+  const validation = validateCreateReport(req.body);
+  if (!validation.valid) {
+    return res.status(400).json({ error: 'Datos del reporte no válidos', fields: validation.errors });
+  }
+
+  const user = req.user;
+  if (!user) return res.status(401).json({ error: 'Autenticación requerida' });
   if (user.role !== Role.Admin && !user.organizationId) {
     return res.status(403).json({ error: 'El usuario no tiene un organismo asignado' });
   }
   const data = {
-    ...req.body,
+    ...validation.data,
     ...(user.role === Role.Admin ? {} : { organizationId: user.organizationId }),
     ownerId: user.id,
+    status: 'pending',
+    createdAt: new Date().toISOString(),
   };
-  if (!defineAbilityFor(user).can('create', subject('Report', data))) {
+  if (!defineAbilityFor(user).can('create', subject('Report', data) as never)) {
     return res.status(403).json({ error: 'Permiso denegado para este ámbito' });
   }
   const report = await Report.create(data);
