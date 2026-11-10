@@ -22,15 +22,15 @@ Este documento define las reglas que el equipo debe aplicar al revisar cualquier
 - Si hay referencias a entidades externas (p. ej., proyecto, zona), comprobar que esas entidades existan.
 
 ## 5. Reglas de negocio específicas
-- **Regla de superposición**: No se pueden crear dos reportes que cubran exactamente la misma área geográfica dentro de un intervalo de 24 h.
-- **Regla de prioridad**: Los reportes con prioridad `high` deben ser revisados dentro de las **2 h** posteriores a su creación.
-- **Regla de duplicados**: Detectar y agrupar reportes idénticos usando el algoritmo de similitud de texto (Jaccard ≥ 0.85).
+- **Regla de duplicados (referencia para HU-04)**: Dos reportes se consideran duplicados solo cuando se cumplen a la vez estas condiciones: describen la misma área geográfica, se crearon con una diferencia máxima de **24 h** y su similitud textual Jaccard es **≥ 0,85**. En el contrato actual, que representa la ubicación como un punto, la misma área significa las mismas coordenadas; no se infiere una tolerancia geográfica que no esté definida. Si se cumplen las tres condiciones, se agrupan o derivan a revisión como un mismo incidente; la similitud o la cercanía por sí solas no bastan para declarar un duplicado.
+- **Regla de prioridad (independiente de duplicados)**: Los reportes con prioridad `high` deben ser revisados dentro de las **2 h** posteriores a su creación. Este plazo es un objetivo de revisión y no modifica los criterios de detección de duplicados.
 
 ## 6. Preguntas frecuentes (FAQ)
 | Pregunta | Respuesta |
 |---|---|
 | ¿Qué hago si falta un campo obligatorio? | Marcar el reporte como **Rechazado** y solicitar al usuario que lo complete. |
 | ¿Cómo se manejan los errores de conexión a la base de datos? | Registrar el error, notificar al equipo de backend y **no** aceptar el reporte hasta que la conexión sea restablecida. |
+| ¿Cómo se decide si dos reportes son duplicados? | Solo si coinciden en área geográfica, se crearon dentro de 24 h y su Jaccard textual es ≥ 0,85; si no, se mantienen separados. |
 | ¿Se pueden modificar reportes después de la aceptación? | No. Cualquier cambio requiere crear un **nuevo** reporte con referencia al original. |
 
 ---

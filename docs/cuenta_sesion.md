@@ -20,10 +20,10 @@ El cuerpo de registro acepta `displayName`, `email`, `password` y `confirmPasswo
 
 - Nombre: tras eliminar espacios exteriores, entre 2 y 80 caracteres Unicode.
 - Correo: formato de correo válido, máximo 254 caracteres, comparación sin distinguir mayúsculas y unicidad comprobada en almacenamiento.
-- Contraseña nueva: de 12 a 128 caracteres; se conserva exactamente como se escribió y no se recorta. No se exige una combinación arbitraria de mayúsculas, cifras y símbolos.
+- Contraseña nueva: de 12 a 128 caracteres; se rechaza si está formada solo por espacios, aunque alcance el mínimo de longitud. La contraseña se conserva exactamente como se escribió y no se recorta antes de validarla ni de verificarla. No se exige una combinación arbitraria de mayúsculas, cifras y símbolos.
 - Confirmación: debe coincidir exactamente con la contraseña.
 - Campos de autoridad como `role`, `id`, `passwordHash` y `organizationId` nunca se copian desde el registro público.
-- Inicio de sesión: correo normalizado y contraseña de hasta 128 caracteres; la contraseña no se transforma antes de verificarla.
+- Inicio de sesión: correo normalizado y contraseña de hasta 128 caracteres; se rechazan contraseñas vacías o formadas solo por espacios. La contraseña no se recorta ni transforma antes de verificarla.
 
 La implementación pura de estas reglas está en `backend/src/validation/auth.ts`. La disponibilidad del correo y la asignación de organismo requieren repositorio persistente y validación del servidor.
 

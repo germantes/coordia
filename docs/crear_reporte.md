@@ -13,7 +13,7 @@ La interfaz inicial estará en español. Orden recomendado:
 
 El botón de envío permanece desactivado mientras falte un campo obligatorio o haya errores. Los errores se muestran junto al campo afectado. Antes del envío se presenta un resumen breve de categoría y ubicación para que la persona pueda revisarlo.
 
-## Categorías iniciales propuestas
+## Categorías iniciales aceptadas
 
 | Valor API | Etiqueta en español |
 |---|---|
@@ -23,7 +23,7 @@ El botón de envío permanece desactivado mientras falte un campo obligatorio o 
 | `environment` | Medio ambiente |
 | `other` | Otro |
 
-La lista es una propuesta inicial y debe confirmarse con producto. La API solo acepta los valores enumerados; las etiquetas visibles pueden cambiar sin alterar el contrato.
+Estas categorías iniciales han sido aceptadas para la tarea. La API solo acepta los valores enumerados; las etiquetas visibles pueden cambiar sin alterar el contrato.
 
 ## Validaciones
 
@@ -72,4 +72,4 @@ La interfaz web, el selector de ubicación sobre OpenStreetMap, la validación e
 
 La autorización sigue las reglas existentes: la petición necesita un token Bearer válido y un ámbito de organismo asignado para poder crear el reporte. La interfaz puede leer el token de sesión desde `sessionStorage` con la clave `coordia.accessToken`; sin token se trata como invitado y, sin organismo asignado, la API responde `403`. La integración de inicio de sesión y la asignación/resolución de organismo aún deben conectarse para completar el flujo ciudadano.
 
-La lista de categorías sigue siendo una propuesta a confirmar con producto. También quedan por acordar la precisión geográfica que se conservará y por implementar la persistencia definitiva. La detección de duplicados y la confirmación/cuestionamiento corresponden a HU-04.
+La persistencia definitiva queda pendiente. La detección de duplicados y la confirmación/cuestionamiento corresponden a HU-04.

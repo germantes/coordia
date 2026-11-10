@@ -49,7 +49,7 @@ export function validateRegisterInput(value: unknown): ValidationResult<Register
   const password = typeof input.password === 'string' ? input.password : '';
   const passwordLength = [...password].length;
   if (passwordLength < 12 || passwordLength > MAX_PASSWORD_LENGTH || !password.trim()) {
-    errors.password = 'La contraseña debe tener entre 12 y 128 caracteres y no estar vacía.';
+    errors.password = 'La contraseña debe tener entre 12 y 128 caracteres y no puede estar formada solo por espacios. Se conserva tal como se escribió; no se recorta.';
   }
 
   if (typeof input.confirmPassword !== 'string' || input.confirmPassword !== password) {
@@ -75,8 +75,8 @@ export function validateLoginInput(value: unknown): ValidationResult<LoginInput>
 
   const password = typeof input.password === 'string' ? input.password : '';
   const passwordLength = [...password].length;
-  if (passwordLength < 1 || passwordLength > MAX_PASSWORD_LENGTH) {
-    errors.password = 'Introduce una contraseña de hasta 128 caracteres.';
+  if (passwordLength < 1 || passwordLength > MAX_PASSWORD_LENGTH || !password.trim()) {
+    errors.password = 'Introduce una contraseña de hasta 128 caracteres que no esté formada solo por espacios. No se recorta.';
   }
 
   if (Object.keys(errors).length > 0 || !email) return { success: false, errors };

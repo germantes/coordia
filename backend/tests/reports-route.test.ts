@@ -25,10 +25,14 @@ afterAll(async () => {
 });
 
 function tokenForGuest(id = `test-user-${crypto.randomUUID()}`, organizationId = 'test-organization') {
+  return tokenForRole(Role.Guest, id, organizationId);
+}
+
+function tokenForRole(role: Role, id: string, organizationId = 'test-organization') {
   return jwt.sign({
     id,
     email: 'citizen@example.test',
-    role: Role.Guest,
+    role,
     organizationId,
   }, secret);
 }
@@ -97,10 +101,10 @@ describe('POST /api/reports', () => {
 });
 
 describe('nearby reports and citizen responses', () => {
-  async function createReport(ownerId = `author-${crypto.randomUUID()}`) {
+  async function createReport(ownerId = `author-${crypto.randomUUID()}`, organizationId = 'test-organization') {
     const response = await fetch(`${baseUrl}/api/reports`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest(ownerId)}` },
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest(ownerId, organizationId)}` },
       body: JSON.stringify(reportBody),
     });
     expect(response.status).toBe(201);
@@ -202,5 +206,92 @@ describe('nearby reports and citizen responses', () => {
       body: JSON.stringify({ response: 'question', location: locationObservation() }),
     });
     expect(closedResponse.status).toBe(409);
+  });
+});
+
+describe('report read scope', () => {
+  async function createGuestReport(ownerId: string, organizationId: string) {
+    const response = await fetch(`${baseUrl}/api/reports`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${tokenForGuest(ownerId, organizationId)}`,
+      },
+      body: JSON.stringify(reportBody),
+    });
+    expect(response.status).toBe(201);
+    return await response.json() as { id: string };
+  }
+
+  async function listReports(path: string, token: string) {
+    return fetch(`${baseUrl}/api/reports${path}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  it('allows a citizen to read their own reports but not another citizen’s', async () => {
+    const ownReport = await fetch(`${baseUrl}/api/reports`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest('scope-citizen')}` },
+      body: JSON.stringify(reportBody),
+    });
+    const own = await ownReport.json() as { id: string };
+    const other = await fetch(`${baseUrl}/api/reports`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest('another-citizen')}` },
+      body: JSON.stringify(reportBody),
+    });
+    const otherBody = await other.json() as { id: string };
+
+    const response = await listReports('', tokenForGuest('scope-citizen'));
+    const reports = await response.json() as { id: string }[];
+    expect(response.status).toBe(200);
+    expect(reports.map(({ id }) => id)).toContain(own.id);
+    expect(reports.map(({ id }) => id)).not.toContain(otherBody.id);
+
+    const ownOnly = await listReports('/mi', tokenForGuest('scope-citizen'));
+    expect(ownOnly.status).toBe(200);
+    expect(await ownOnly.json()).toEqual(expect.arrayContaining([expect.objectContaining({ id: own.id })]));
+  });
+
+  it('limits organization members to their assigned organization', async () => {
+    const inScope = await createGuestReport('scope-org-author', 'scope-org');
+    const outOfScope = await createGuestReport('other-org-author', 'other-org');
+
+    const response = await listReports('', tokenForRole(Role.QA, 'qa-reviewer', 'scope-org'));
+    const reports = await response.json() as { id: string }[];
+    expect(response.status).toBe(200);
+    expect(reports.map(({ id }) => id)).toContain(inScope.id);
+    expect(reports.map(({ id }) => id)).not.toContain(outOfScope.id);
+  });
+
+  it('creates and lists development reports for dev without exposing production reports', async () => {
+    const devToken = tokenForRole(Role.Dev, 'developer', 'dev-org');
+    const created = await fetch(`${baseUrl}/api/reports`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${devToken}` },
+      body: JSON.stringify(reportBody),
+    });
+    const createdBody = await created.json() as { id: string; environment: string };
+    expect(created.status).toBe(201);
+    expect(createdBody.environment).toBe('development');
+
+    await createGuestReport('developer', 'dev-org');
+    await Report.create({
+      ...reportBody,
+      category: 'safety',
+      ownerId: 'developer',
+      organizationId: 'dev-org',
+      environment: 'production',
+    });
+    const response = await listReports('', devToken);
+    const reports = await response.json() as { id: string; environment?: string }[];
+    expect(response.status).toBe(200);
+    expect(reports.map(({ id }) => id)).toContain(createdBody.id);
+    expect(reports.every(({ environment }) => environment === 'development')).toBe(true);
+
+    const ownReports = await listReports('/mi', devToken);
+    expect(ownReports.status).toBe(200);
+    expect(await ownReports.json()).toEqual([expect.objectContaining({ id: createdBody.id })]);
   });
 });
