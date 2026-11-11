@@ -1,18 +1,19 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import jwt from 'jsonwebtoken';
+import { AuthStore } from '../src/auth/store.js';
+import { issueAccessToken } from '../src/routes/auth.js';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { createServer } from '../src/index.js';
 import { Role } from '../src/constants/roles.js';
 import { Report } from '../src/models/report.js';
 
-const secret = 'insecure-dev-secret';
+const authStore = new AuthStore(':memory:');
 let server: Server;
 let baseUrl: string;
 
 beforeAll(async () => {
   await new Promise<void>((resolve) => {
-    server = createServer().listen(0, '127.0.0.1', () => {
+    server = createServer(authStore).listen(0, '127.0.0.1', () => {
       const address = server.address() as AddressInfo;
       baseUrl = `http://127.0.0.1:${address.port}`;
       resolve();
@@ -22,6 +23,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (server) await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  authStore.close();
 });
 
 function tokenForGuest(id = `test-user-${crypto.randomUUID()}`, organizationId = 'test-organization') {
@@ -29,12 +31,14 @@ function tokenForGuest(id = `test-user-${crypto.randomUUID()}`, organizationId =
 }
 
 function tokenForRole(role: Role, id: string, organizationId = 'test-organization') {
-  return jwt.sign({
+  const user = {
     id,
     email: 'citizen@example.test',
     role,
     organizationId,
-  }, secret);
+  };
+  const session = authStore.createSession(user);
+  return issueAccessToken(session.sid, user);
 }
 
 const reportBody = {
@@ -82,11 +86,13 @@ describe('POST /api/reports', () => {
   });
 
   it('rejects a guest without an organization assignment', async () => {
-    const noOrganizationToken = jwt.sign({
+    const user = {
       id: 'unassigned-guest',
       email: 'guest@example.test',
       role: Role.Guest,
-    }, secret);
+    };
+    const session = authStore.createSession(user);
+    const noOrganizationToken = issueAccessToken(session.sid, user);
     const response = await fetch(`${baseUrl}/api/reports`, {
       method: 'POST',
       headers: {

@@ -5,14 +5,19 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import reportsRouter from './routes/reports.js';
 import administrationRouter from './routes/administration.js';
+import { AuthStore } from './auth/store.js';
+import { authRouter } from './routes/auth.js';
+import { jwtSecret } from './middleware/auth.js';
 
 /** Crea y configura la aplicación Express. */
-export function createServer(): Application {
+export function createServer(store = new AuthStore(process.env.AUTH_DB_PATH ?? '.data/auth.sqlite')): Application {
+  jwtSecret();
   const app = express();
 
-  app.use(cors());
+  app.use(cors({ origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173', credentials: true }));
   app.use(express.json());
-  app.use(authMiddleware);
+  app.use('/api/auth', authRouter(store));
+  app.use(authMiddleware(store));
   app.use('/api/reports', reportsRouter);
   app.use('/api', administrationRouter);
 
