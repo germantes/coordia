@@ -16,7 +16,7 @@
     "status": "en revisión",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-10T18:02:58Z",
+    "updated_at_utc": "2026-11-11T18:01:25Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -120,16 +120,16 @@
       "cut": "d3",
       "label": "cierre",
       "ideal_h": 110.6,
-      "real_h": null,
-      "deviation_h": null,
-      "deviation_pct": null,
-      "hu_accepted": null,
-      "hours_accepted_h": null,
-      "blocked_tasks": null,
-      "block_days": null,
-      "critical_defects": null,
-      "logged_hours": null,
-      "notes": "Pendiente del cierre diario (CTRL-2); null ≠ 0."
+      "real_h": 148.0,
+      "deviation_h": 37.4,
+      "deviation_pct": 23.7,
+      "hu_accepted": 0,
+      "hours_accepted_h": 0.0,
+      "blocked_tasks": 0,
+      "block_days": 0,
+      "critical_defects": 0,
+      "logged_hours": 2.25,
+      "notes": "Cierre del 11/11 a las 19:01 Europe/Madrid. Restante real 148,0 h frente a ideal 110,6 h: desviación 37,4 h = 23,7 % (KPI-2 rojo, por encima del 20 %). Completadas HU-04 · T1 y HU-11 · T1 (10 h). Ninguna HU padre aceptada. H1 no está cumplido: HU-01 · T1 y HU-02 · T1 siguen en revisión (7,5 h); HU-07 · T1 en curso (5 h) y HU-05 · T1 en sprint backlog (9,5 h). CTRL-1 sigue en revisión. 0 bloqueos, 0 defectos DEF urgentes. Horas registradas acumuladas: 2,25 h."
     },
     {
       "date": "2026-11-12",
@@ -790,7 +790,7 @@
       "start": "2026-11-09",
       "due": "2026-11-11",
       "milestone": "H1",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -800,7 +800,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-11T18:01:25Z: completados.",
       "url": "https://app.clickup.com/t/869fc765z"
     },
     {
@@ -1125,7 +1125,7 @@
   ],
   "invariants": {
     "daily_rows": 11,
-    "daily_filled_rows": 3,
+    "daily_filled_rows": 4,
     "audit_rows": 25,
     "hu_subtasks": 18,
     "ctrl_tasks": 7,
@@ -1141,12 +1141,19 @@
     "baseline_B0_h": 158.0,
     "N0": 6,
     "people": 9,
-    "open_remaining_h": 153.0,
+    "open_remaining_h": 148.0,
     "logged_hours": 2.25,
     "blocked_tasks": 0,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "1.4",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-11",
+      "change": "Cierre d3: restante real 148,0 h, ideal 110,6 h, desviación 37,4 h (23,7 %, rojo). HU-11 · T1 completada. H1 no cumplido. 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 2,25.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "1.3",
       "baseline": "LB-S2-v1",
