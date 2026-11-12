@@ -43,7 +43,7 @@ La decisión de este contrato es comprobar una sesión persistente en cada acces
 
 Logout y refresh deben serializar sus cambios sobre la misma sesión. Si una renovación termina antes del logout, los tokens emitidos conservan ese `sid` y quedan invalidados al revocarlo. Si el logout termina primero, la renovación devuelve `401`.
 
-Si el almacén de sesiones falla, las operaciones protegidas y la renovación devuelven `503` sin ejecutar la operación solicitada. Un fallo al persistir la revocación también devuelve `503`, permitiendo reintentar el cierre. El cliente debe borrar el access token local al cerrar sesión y mostrar el error si el servidor no confirma la revocación. La integración de la interfaz de cuenta y sesión queda pendiente.
+Si el almacén de sesiones falla, las operaciones protegidas y la renovación devuelven `503` sin ejecutar la operación solicitada. Un fallo al persistir la revocación también devuelve `503`, permitiendo reintentar el cierre. El cliente debe borrar el access token local al cerrar sesión y mostrar el error si el servidor no confirma la revocación. La interfaz muestra los formularios de registro e inicio de sesión y permite cerrar la sesión desde la misma página.
 
 Las pruebas de `backend/tests/auth-route.test.ts` inician sesión, acceden a una función protegida, cierran sesión y repiten la llamada con el mismo access token todavía vigente. La última petición devuelve `401`. También cubren el rechazo del refresh tras logout, el cierre repetido, la carrera entre refresh y logout y la revocación después de reabrir el almacén persistente.
 
@@ -65,4 +65,4 @@ El backend requiere Node >= 24.7 por las APIs integradas de Argon2id y SQLite. `
 
 `JWT_SECRET` es obligatorio en producción. `FRONTEND_ORIGIN` configura el origen permitido para peticiones con cookies, con valor de desarrollo `http://localhost:5173`. Login y refresh devuelven `{ accessToken, tokenType: "Bearer", expiresIn: 900 }` y la cookie de renovación. El navegador debe usar `credentials: 'include'` al llamar a esas rutas. Logout recibe el access token de la sesión en la cabecera Bearer.
 
-Los JWT anteriores que carecen de `sid` requieren un nuevo login. El registro crea cuentas ciudadanas sin organismo asignado. La integración de invitaciones o administración de organismos y la interfaz de cuenta y sesión siguen pendientes.
+Los JWT anteriores que carecen de `sid` requieren un nuevo login. El registro crea cuentas ciudadanas sin organismo asignado. La asignación de organismos mediante invitación o administración sigue pendiente. La interfaz conserva el access token en la pestaña, renueva la sesión ante un 401 y reintenta la operación una vez. Al cerrar sesión retira los datos de reportes y borra el token local.
