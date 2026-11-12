@@ -5,15 +5,16 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { createServer } from '../src/index.js';
 import { Role } from '../src/constants/roles.js';
-import { Report } from '../src/models/report.js';
+import { ReportStore } from '../src/models/report.js';
 
+const reportStore = new ReportStore(':memory:');
 const authStore = new AuthStore(':memory:');
 let server: Server;
 let baseUrl: string;
 
 beforeAll(async () => {
   await new Promise<void>((resolve) => {
-    server = createServer(authStore).listen(0, '127.0.0.1', () => {
+    server = createServer(authStore, reportStore).listen(0, '127.0.0.1', () => {
       const address = server.address() as AddressInfo;
       baseUrl = `http://127.0.0.1:${address.port}`;
       resolve();
@@ -23,6 +24,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   if (server) await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+  reportStore.close();
   authStore.close();
 });
 
@@ -204,8 +206,7 @@ describe('nearby reports and citizen responses', () => {
     });
     expect(otherOrganizationResponse.status).toBe(403);
 
-    const storedReport = await Report.findByPk(report.id);
-    await storedReport?.update({ status: 'validated' });
+    reportStore.update(reportStore.findByPk(report.id)!, { status: 'validated' });
     const closedResponse = await fetch(`${baseUrl}/api/reports/${report.id}/response`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${tokenForGuest('closed-report-user')}` },
@@ -283,7 +284,7 @@ describe('report read scope', () => {
     expect(createdBody.environment).toBe('development');
 
     await createGuestReport('developer', 'dev-org');
-    await Report.create({
+    reportStore.create({
       ...reportBody,
       category: 'safety',
       ownerId: 'developer',
@@ -299,5 +300,43 @@ describe('report read scope', () => {
     const ownReports = await listReports('/mi', devToken);
     expect(ownReports.status).toBe(200);
     expect(await ownReports.json()).toEqual([expect.objectContaining({ id: createdBody.id })]);
+  });
+});
+
+describe('community verification', () => {
+  it('restricts rules, applies them by category, audits transitions and keeps readers in scope', async () => {
+    const ownerToken = tokenForGuest('verification-owner');
+    const voterToken = tokenForGuest('verification-voter');
+    const adminToken = tokenForRole(Role.Admin, 'rule-admin');
+    const request = (path: string, token: string, method = 'GET', body?: unknown) => fetch(baseUrl + path, {
+      method, headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    const create = await request('/api/reports', ownerToken, 'POST', {
+      ...reportBody, creatorObservation: { ...reportBody.location, capturedAt: new Date().toISOString(), accuracyMeters: 10 },
+    });
+    expect(create.status).toBe(201);
+    const { id, verification } = await create.json();
+    expect(verification).toMatchObject({ score: 0.31, state: 'pending' });
+    const config = '/api/reports/confidence-rules/safety';
+    const rule = { threshold: 0.38, creatorWeight: 0.30, proximityWeight: 0.25, socialWeight: 0.35 };
+    expect((await request(config, ownerToken, 'PUT', rule)).status).toBe(403);
+    expect((await request(config, adminToken, 'PUT', { ...rule, threshold: 2 })).status).toBe(400);
+    expect((await request(config, adminToken, 'PUT', rule)).status).toBe(200);
+    expect(await (await request('/api/reports/confidence-rules/other', adminToken)).json())
+      .toMatchObject({ threshold: 0.70 });
+    const answer = (response: string) => request(`/api/reports/${id}/response`, voterToken, 'PUT', {
+      response, location: { ...reportBody.location, capturedAt: new Date().toISOString(), accuracyMeters: 5 },
+    });
+    expect(await (await answer('confirm')).json()).toMatchObject({ changed: true, verification: { state: 'verified', score: 0.38 } });
+    expect(await (await answer('confirm')).json()).toMatchObject({ changed: false, counts: { confirm: 1 } });
+    expect(await (await answer('question')).json()).toMatchObject({ verification: { state: 'pending' } });
+    const path = `/api/reports/${id}/verification`;
+    const result = await (await request(path, ownerToken)).json();
+    expect(result.history.map((event: { state: string }) => event.state)).toEqual(['pending', 'verified', 'pending']);
+    expect(Date.parse(result.history[1].changedAt)).toBeGreaterThan(0);
+    expect((await request(path, voterToken)).status).toBe(404);
+    expect((await request(path, tokenForRole(Role.QA, 'foreign-reviewer', 'foreign-org'))).status).toBe(404);
+    expect((await request(`/api/reports/${id}`, adminToken, 'PATCH', { verification: { state: 'verified' } })).status).toBe(400);
   });
 });

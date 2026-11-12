@@ -75,6 +75,7 @@ export default function App() {
   const [description, setDescription] = useState('');
   const [occurredAt, setOccurredAt] = useState('');
   const [location, setLocation] = useState<Coordinates | null>(null);
+  const [creatorObservation, setCreatorObservation] = useState<LocationObservation | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -142,7 +143,9 @@ export default function App() {
     setLocating(true);
     setFormError('');
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
+      ({ coords, timestamp }) => {
+        setCreatorObservation({ latitude: coords.latitude, longitude: coords.longitude,
+          accuracyMeters: coords.accuracy, capturedAt: new Date(timestamp).toISOString() });
         setLocation({ latitude: coords.latitude, longitude: coords.longitude });
         setLocating(false);
       },
@@ -178,6 +181,7 @@ export default function App() {
       category,
       description,
       location,
+      ...(creatorObservation ? { creatorObservation } : {}),
       ...(occurredAt ? { occurredAt: localDateTimeToIso(occurredAt) } : {}),
     };
 
@@ -204,6 +208,7 @@ export default function App() {
       setDescription('');
       setOccurredAt('');
       setLocation(null);
+      setCreatorObservation(null);
     } catch {
       setFormError('No se pudo conectar con el servidor. Revisa la conexión e inténtalo de nuevo.');
     } finally {

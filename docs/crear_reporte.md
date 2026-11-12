@@ -68,8 +68,8 @@ Estas categorías iniciales han sido aceptadas para la tarea. La API solo acepta
 
 ## Estado y límites de implementación
 
-La interfaz web, el selector de ubicación sobre OpenStreetMap, la validación en cliente y servidor y `POST /api/reports` están implementados. El modelo actual conserva los reportes solo en memoria: se pueden consultar mientras siga ejecutándose el proceso, pero se pierden al reiniciarlo. Todavía no hay persistencia en base de datos.
+La interfaz web, el selector de ubicación sobre OpenStreetMap, la validación en cliente y servidor y `POST /api/reports` están implementados. Los reportes se guardan en SQLite; el contrato de confianza describe la observación GPS opcional de autor y la configuración de almacenamiento.
 
 La autorización sigue las reglas existentes: la petición necesita un token Bearer válido y un ámbito de organismo asignado para poder crear el reporte. La interfaz puede leer el token de sesión desde `sessionStorage` con la clave `coordia.accessToken`; sin token se trata como invitado y, sin organismo asignado, la API responde `403`. La integración de inicio de sesión y la asignación/resolución de organismo aún deben conectarse para completar el flujo ciudadano.
 
-La persistencia definitiva queda pendiente. La detección de duplicados y la confirmación/cuestionamiento corresponden a HU-04.
+La detección de duplicados y la confirmación/cuestionamiento corresponden a HU-04.

@@ -65,4 +65,4 @@ El backend requiere Node >= 24.7 por las APIs integradas de Argon2id y SQLite. `
 
 `JWT_SECRET` es obligatorio en producción. `FRONTEND_ORIGIN` configura el origen permitido para peticiones con cookies, con valor de desarrollo `http://localhost:5173`. Login y refresh devuelven `{ accessToken, tokenType: "Bearer", expiresIn: 900 }` y la cookie de renovación. El navegador debe usar `credentials: 'include'` al llamar a esas rutas. Logout recibe el access token de la sesión en la cabecera Bearer.
 
-Los JWT anteriores que carecen de `sid` requieren un nuevo login. El registro crea cuentas ciudadanas sin organismo asignado. La integración de invitaciones o administración de organismos y la interfaz de cuenta y sesión siguen pendientes. Los reportes conservan su almacenamiento actual en memoria.
+Los JWT anteriores que carecen de `sid` requieren un nuevo login. El registro crea cuentas ciudadanas sin organismo asignado. La integración de invitaciones o administración de organismos y la interfaz de cuenta y sesión siguen pendientes.

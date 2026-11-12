@@ -3,14 +3,16 @@ import cors from 'cors';
 import { authMiddleware } from './middleware/auth.js';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
-import reportsRouter from './routes/reports.js';
+import { ReportStore } from './models/report.js';
+import { reportsRouter } from './routes/reports.js';
 import administrationRouter from './routes/administration.js';
 import { AuthStore } from './auth/store.js';
 import { authRouter } from './routes/auth.js';
 import { jwtSecret } from './middleware/auth.js';
 
 /** Crea y configura la aplicación Express. */
-export function createServer(store = new AuthStore(process.env.AUTH_DB_PATH ?? '.data/auth.sqlite')): Application {
+export function createServer(store = new AuthStore(process.env.AUTH_DB_PATH ?? '.data/auth.sqlite'),
+  reports = new ReportStore(process.env.REPORT_DB_PATH ?? '.data/reports.sqlite')): Application {
   jwtSecret();
   const app = express();
 
@@ -18,7 +20,7 @@ export function createServer(store = new AuthStore(process.env.AUTH_DB_PATH ?? '
   app.use(express.json());
   app.use('/api/auth', authRouter(store));
   app.use(authMiddleware(store));
-  app.use('/api/reports', reportsRouter);
+  app.use('/api/reports', reportsRouter(reports));
   app.use('/api', administrationRouter);
 
   const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
