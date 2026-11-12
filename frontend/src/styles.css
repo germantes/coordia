@@ -19,7 +19,7 @@ h1 { font: 800 clamp(28px, 5vw, 38px)/1.18 Manrope, sans-serif; margin: 0; lette
 .field { margin-bottom: 24px; }
 .field label { display: block; margin-bottom: 9px; color: #274559; font-weight: 700; font-size: 14px; }
 .field label span[aria-hidden] { color: #c4514c; }
-select, textarea, input[type='datetime-local'] { width: 100%; border: 1px solid #cbd8df; border-radius: 8px; color: #203b4d; background-color: #fff; padding: 12px 13px; }
+select, textarea, input[type='datetime-local'], .account input { width: 100%; border: 1px solid #cbd8df; border-radius: 8px; color: #203b4d; background-color: #fff; padding: 12px 13px; }
 select { height: 48px; }
 textarea { resize: vertical; min-height: 120px; line-height: 1.55; }
 select:hover, textarea:hover, input[type='datetime-local']:hover { border-color: #97acb8; }
@@ -74,3 +74,9 @@ select:hover, textarea:hover, input[type='datetime-local']:hover { border-color:
 .nearby-privacy { margin: 15px 0 0; color: #84939b; font-size: 11px; line-height: 1.5; }
 @media (max-width: 600px) { .page-header { height: 62px; padding: 0 18px; } .header-label { font-size: 12px; } .content { width: min(100% - 28px, 760px); margin: 34px auto 42px; } .report-form { padding: 22px 18px; border-radius: 12px; } .map-frame { height: 250px; } .form-footer { align-items: stretch; flex-direction: column; } .submit-button { width: 100%; } }
 @media (max-width: 600px) { .nearby-section { margin-top: 24px; padding: 21px 17px; border-radius: 12px; } .nearby-heading-row { align-items: stretch; flex-direction: column; gap: 14px; } .nearby-refresh { width: 100%; } .response-controls { flex-direction: column; } .response-button { width: 100%; } }
+
+.account { margin-bottom: 32px; }
+.account h2 { margin: 0 0 18px; font: 700 22px Manrope, sans-serif; color: #18374a; }
+.account .field { margin-bottom: 16px; }
+.account-actions { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; }
+.account .location-button { padding: 8px 0; }
