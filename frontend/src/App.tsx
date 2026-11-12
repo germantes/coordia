@@ -1,6 +1,9 @@
 import React, { type FormEvent, useState } from 'react';
 import LocationPicker, { type Coordinates } from './LocationPicker.js';
 
+import Account from './Account.js';
+import { Session, SessionExpired } from './session.js';
+
 const categories = [
   ['infrastructure', 'Infraestructura'],
   ['safety', 'Seguridad'],
@@ -8,8 +11,6 @@ const categories = [
   ['environment', 'Medio ambiente'],
   ['other', 'Otro'],
 ] as const;
-
-const apiBase = import.meta.env.VITE_API_URL ?? 'http://localhost:4000';
 
 interface ApiError {
   error?: string;
@@ -50,12 +51,6 @@ function getLocationObservation(): Promise<LocationObservation> {
   });
 }
 
-function getAccessToken(): string {
-  const token = sessionStorage.getItem('coordia.accessToken');
-  if (!token) throw new Error('Inicia sesión para ver y responder reportes cercanos.');
-  return token;
-}
-
 function getResponseError(body: ApiError, status: number): string {
   if (status === 401) return 'Inicia sesión para responder a reportes.';
   if (status === 403) return body.error ?? 'No tienes acceso a este reporte o no tienes un organismo asignado.';
@@ -70,7 +65,7 @@ function localDateTimeToIso(value: string): string | undefined {
   return Number.isNaN(date.getTime()) ? undefined : date.toISOString();
 }
 
-export default function App() {
+function Reports({ session, onExpire }: { session: Session; onExpire: () => void }) {
   const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [occurredAt, setOccurredAt] = useState('');
@@ -90,11 +85,10 @@ export default function App() {
     setNearbyBusy(true);
     setNearbyError('');
     try {
-      const token = getAccessToken();
       const currentLocation = await getLocationObservation();
-      const response = await fetch(`${apiBase}/api/reports/nearby`, {
+      const response = await session.request('/api/reports/nearby', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ location: currentLocation }),
       });
       const body = await response.json() as ApiError & { reports?: NearbyReport[] };
@@ -102,6 +96,7 @@ export default function App() {
       setNearbyReports(body.reports ?? []);
       setNearbyLoaded(true);
     } catch (error) {
+      if (error instanceof SessionExpired) return onExpire();
       setNearbyError(error instanceof Error ? error.message : 'No se pudieron cargar los reportes cercanos.');
     } finally {
       setNearbyBusy(false);
@@ -112,11 +107,10 @@ export default function App() {
     setActiveResponseReportId(reportId);
     setNearbyError('');
     try {
-      const token = getAccessToken();
       const currentLocation = await getLocationObservation();
-      const response = await fetch(`${apiBase}/api/reports/${encodeURIComponent(reportId)}/response`, {
+      const response = await session.request(`/api/reports/${encodeURIComponent(reportId)}/response`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ response: answer, location: currentLocation }),
       });
       const body = await response.json() as ApiError & {
@@ -128,6 +122,7 @@ export default function App() {
         ? { ...report, response: body.response ?? answer, counts: body.counts ?? report.counts }
         : report));
     } catch (error) {
+      if (error instanceof SessionExpired) return onExpire();
       setNearbyError(error instanceof Error ? error.message : 'No se pudo guardar tu respuesta.');
     } finally {
       setActiveResponseReportId(null);
@@ -183,14 +178,9 @@ export default function App() {
 
     setBusy(true);
     try {
-      const response = await fetch(`${apiBase}/api/reports`, {
+      const response = await session.request('/api/reports', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          ...(sessionStorage.getItem('coordia.accessToken')
-            ? { Authorization: `Bearer ${sessionStorage.getItem('coordia.accessToken')}` }
-            : {}),
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
       const body = await response.json() as ApiError & { id?: string | number; status?: string };
@@ -204,7 +194,8 @@ export default function App() {
       setDescription('');
       setOccurredAt('');
       setLocation(null);
-    } catch {
+    } catch (error) {
+      if (error instanceof SessionExpired) return onExpire();
       setFormError('No se pudo conectar con el servidor. Revisa la conexión e inténtalo de nuevo.');
     } finally {
       setBusy(false);
@@ -212,13 +203,7 @@ export default function App() {
   }
 
   return (
-    <main className="page-shell">
-      <header className="page-header">
-        <a className="brand" href="/" aria-label="Coordia, inicio"><span className="brand-mark">C</span> COORDIA</a>
-        <span className="header-label">Comunicación ciudadana</span>
-      </header>
-
-      <section className="content">
+    <>
         <div className="intro">
           <p className="eyebrow">INCIDENCIAS EN TU ENTORNO</p>
           <h1>Comunica un incidente</h1>
@@ -319,6 +304,28 @@ export default function App() {
           </div>
           <p className="nearby-privacy">La ubicación se usa para comprobar la proximidad y no se muestra en los reportes.</p>
         </section>
+    </>
+  );
+}
+
+export default function App() {
+  const [{ session, notice }, setAccount] = useState(() => ({ session: Session.restore(), notice: '' }));
+
+  return (
+    <main className="page-shell">
+      <header className="page-header">
+        <a className="brand" href="/" aria-label="Coordia, inicio"><span className="brand-mark">C</span> COORDIA</a>
+        <span className="header-label">Comunicación ciudadana</span>
+      </header>
+
+      <section className="content">
+        <Account session={session} notice={notice} onChange={(next, message) => setAccount({ session: next, notice: message })} />
+        {session && <Reports session={session} onExpire={() => {
+          session.clear();
+          setAccount((current) => current.session === session
+            ? { session: null, notice: 'La sesión ha caducado. Vuelve a iniciar sesión.' }
+            : current);
+        }} />}
       </section>
       <footer className="page-footer">COORDIA · Información para mejorar nuestro entorno</footer>
     </main>
