@@ -1,58 +1,75 @@
-# Matriz de Destinatarios y Tratamiento de Urgencias No Verificadas (Málaga)
+# HU-07 — Matriz de destinatarios y tratamiento de urgencias no verificadas (Málaga)
 
-Especificación del enrutamiento de incidentes a organismos de emergencia del término municipal de Málaga y protocolo de actuación ante avisos de alta prioridad sin verificación previa.
+Especificación del enrutamiento de incidentes a organismos de emergencia del término municipal de Málaga, régimen horario de avisos y protocolo para urgencias no verificadas.
 
 ---
 
 ## 1. Organismos de Respuesta en Málaga
 
-* **112 Andalucía:** Centro de coordinación supramunicipal para emergencias de riesgo vital o concurrencia de múltiples cuerpos.
-* **Real Cuerpo de Bomberos de Málaga:** Extinción, rescate, salvamento, achiques, derrumbes y fugas de gas.
-* **Policía Local de Málaga (092 / CECOP):** Tráfico urbano, cortes de vía, seguridad ciudadana y ordenanzas locales.
-* **Policía Nacional (091) / Guardia Civil (062):** Delitos graves; Guardia Civil (Tráfico) en autovías/rondas (A-7, MA-20) y zonas costeras/rurales.
-* **061 Sanitarios (SAS):** Urgencias sanitarias y soporte vital.
-* **Protección Civil Málaga:** Apoyo logístico, balizamiento y situaciones de temporal.
-* **Servicios Municipales:** EMASA (red de aguas y saneamiento), Movilidad (semáforos y tráfico) y LIMASAM / Parques y Jardines (obstáculos y caída de árboles).
+* **112 Andalucía:** Centro de coordinación supramunicipal para emergencias con riesgo vital o concurrencia de múltiples cuerpos (24/7).
+* **Real Cuerpo de Bomberos de Málaga:** Extinción de incendios, rescate, salvamento, achiques, derrumbes y fugas de gas (24/7).
+* **Policía Local de Málaga (092 / CECOP):** Tráfico urbano, cortes de vía, ordenanzas y seguridad ciudadana (24/7).
+* **Policía Nacional (091) / Guardia Civil (062):** Delitos graves; Guardia Civil en autovías/rondas (A-7, MA-20) y litoral (24/7).
+* **061 Sanitarios (SAS):** Urgencias sanitarias y soporte vital (24/7).
+* **Protección Civil Málaga:** Apoyo logístico, balizamiento y situaciones de temporal (guardia activable).
+* **Servicios Operativos Municipales:** EMASA (aguas), Movilidad (tráfico y semáforos) y LIMASAM / Parques y Jardines (obstáculos y arbolado).
 
 ---
 
-## 2. Matriz de Destinatarios
+## 2. Matriz de Destinatarios y Mapeo de Categorías
 
-| Tipo de Incidente | Criticidad | Organismo Principal | Organismos Secundarios | Ámbito Territorial |
-| :--- | :--- | :--- | :--- | :--- |
-| **Incendio Urbano / Estructura** | Alta / Crítica | Bomberos de Málaga | 112, Policía Local, 061 | Casco urbano y barriadas |
-| **Incendio Forestal / Periurbano** | Crítica | 112 Andalucía / INFOCA | Bomberos, Policía Local, Guardia Civil | Montes de Málaga, Gibralfaro |
-| **Inundación / Temporal** | Media / Alta | 112 Andalucía (CECOPAL) | Bomberos, Protección Civil, Policía Local, EMASA | Litoral y cuencas fluviales |
-| **Accidente de Tráfico Urbano** | Alta (con heridos) | 112 Andalucía / 061 | Policía Local, Bomberos (si hay atrapados) | Red viaria municipal |
-| **Accidente en Rondas / Autovías** | Alta / Crítica | 112 Andalucía | Guardia Civil de Tráfico, 061, Bomberos | A-7, MA-20, accesos |
-| **Derrumbe / Daño Estructural** | Media / Alta | Bomberos de Málaga | Policía Local, Urbanismo / Protección Civil | Casco urbano |
-| **Obstáculo en Vía / Caída de Árbol** | Baja / Media | Policía Local | LIMASAM, Parques y Jardines, Movilidad | Red viaria municipal |
-| **Rotura Grave de Red de Agua** | Media | EMASA | Policía Local (si afecta al tráfico) | Casco municipal |
-| **Emergencia Sanitaria en Vía Pública** | Crítica | 061 (Sanitarios) | Policía Local (primera intervención) | Vía pública en general |
+Mapeo entre las categorías de la app (`safety`, `infrastructure`, `environment`, `accessibility`, `other`) y los organismos receptores en Málaga:
+
+| Categoría API | Tipo de Incidente | Criticidad | Organismo Principal | Organismos Secundarios | Ámbito Territorial |
+| :--- | :--- | :--- | :--- | :--- | :--- |
+| `safety` | **Incendio Urbano / Estructura** | Alta / Crítica | Bomberos de Málaga | 112, Policía Local, 061 | Casco urbano y barriadas |
+| `safety` | **Incendio Forestal / Periurbano** | Crítica | 112 Andalucía / INFOCA | Bomberos, Policía Local, Guardia Civil | Montes de Málaga, Gibralfaro |
+| `safety` | **Accidente de Tráfico Urbano** | Alta (con heridos) | 112 Andalucía / 061 | Policía Local, Bomberos (si hay atrapados) | Red viaria municipal |
+| `safety` | **Accidente en Rondas / Autovías** | Alta / Crítica | 112 Andalucía | Guardia Civil de Tráfico, 061, Bomberos | A-7, MA-20, accesos |
+| `safety` | **Emergencia Sanitaria en Vía** | Crítica | 061 (Sanitarios) | Policía Local (primera intervención) | Vía pública en general |
+| `infrastructure` | **Derrumbe / Daño Estructural** | Media / Alta | Bomberos de Málaga | Policía Local, Urbanismo / Protección Civil | Casco urbano |
+| `infrastructure` | **Rotura Grave Red de Agua** | Media | EMASA | Policía Local (si afecta al tráfico) | Red municipal de agua |
+| `environment` | **Inundación / Temporal Costero** | Media / Alta | 112 Andalucía (CECOPAL) | Bomberos, Protección Civil, Policía Local, EMASA | Litoral y cuencas fluviales |
+| `accessibility` | **Obstáculo en Calzada / Arbolado** | Baja / Media | Policía Local | LIMASAM, Parques y Jardines, Movilidad | Red viaria municipal |
+| `other` | **Incidente no clasificado** | Variable | 112 / Policía Local | Según triaje del operador de guardia | Término municipal |
 
 ---
 
-## 3. Tratamiento de Urgencias No Verificadas
+## 3. Régimen Horario y Disponibilidad (CA-3 de HU-07)
 
-Aplica a reportes clasificados con criticidad **Alta o Crítica** que aún no han alcanzado el umbral de confianza comunitaria.
+* **Servicios de Emergencia 24/7:** 112, Bomberos, Policía Local (CECOP), Guardia Civil y 061 reciben despachos de forma inmediata y continua las 24 horas.
+* **Servicios Operativos Diurnos (08:00–15:00):** EMASA (oficinas), Movilidad y LIMASAM reciben avisos no urgentes en horario laboral. Fuera de esta franja los avisos ordinarios se encolan para el siguiente día laborable a las 08:00.
+* **Urgencias fuera de horario:** Si un reporte en categoría diurna (`infrastructure`, `environment`, `accessibility`) es calificado como Urgente/Crítico fuera de horario, se redirige inmediatamente al retén de guardia 24/7 (CECOP Policía Local o Bomberos) para evitar demoras.
+* **Criterio de prueba (T3):** Simular reportes con marca temporal (`occurredAt` / `createdAt`) nocturna o en fin de semana, verificando que los servicios 24/7 reciben despacho instantáneo y los servicios ordinarios no críticos se encolan sin pérdidas.
 
-### 3.1. Estado `Pre-alerta Urgente`
-* El aviso se marca como `Pre-alerta Urgente (Sin verificar)` y se notifica inmediatamente al centro de control correspondiente (112 Andalucía / CECOP de Policía Local).
-* Se transmite la telemetría disponible (coordenadas GPS, categoría, hora y fotografías si existen) advirtiendo explícitamente que está pendiente de confirmación en el terreno.
+---
 
-### 3.2. Filtros de Admisión Previa
-Para evitar falsas alarmas, el reporte debe superar antes del preaviso:
-1. **Precisión geográfica:** Coordenadas dentro de Málaga con margen de precisión GPS informado $< 50\text{ m}$.
-2. **Control de duplicados:** Si existe un aviso abierto del mismo tipo a $< 150\text{ m}$ en los últimos 20 minutos, se vincula como testimonio adicional y no genera nueva pre-alerta.
-3. **Estado de cuenta:** Emisor sin bloqueos ni sanciones previas por falsos reportes.
+## 4. Tratamiento de Urgencias No Verificadas
 
-### 3.3. Verificación Acelerada (*Fast-Track*)
-* El sistema solicita confirmación prioritaria a usuarios activos en un radio $\le 300\text{ m}$ ($\le 1000\text{ m}$ en áreas periurbanas o forestales).
-* **Criterios de validación exprés:**
-  * **1 confirmación** de usuario acreditado (fuerzas de seguridad, personal municipal o Protección Civil) eleva el reporte a `Verificado Urgente`.
-  * **2 confirmaciones independientes** de ciudadanos sin historial negativo elevan el reporte a `Verificado Urgente`.
+Aplica a reportes clasificados con criticidad **Alta o Crítica** pendientes de confirmación comunitaria.
 
-### 3.4. Resolución del Aviso
-* **Confirmación:** Pasa a `Verificado Urgente` y se activa el despacho a todos los organismos secundarios fijados en la matriz.
-* **Refutación / Falsedad:** Si recibe 2 rechazos fundados o descarte de patrulla oficial, pasa a `Descartado (Falso Aviso)`. Se envía orden inmediata de anulación a los centros preavisados y se sanciona la cuenta del emisor.
-* **Expiración (Timeout):** Tras 10 minutos sin confirmación ni refutación, la pre-alerta pasa a `Pendiente de Revisión Manual` o caduca para evitar mantener incidentes no contrastados en la cola activa.
+### 4.1. Pre-alerta Urgente
+* El reporte se marca con prioridad urgente y se despacha un preaviso inmediato a los centros de control (112 / CECOP de Policía Local) con coordenadas, categoría y marca temporal, indicando que está pendiente de confirmación presencial.
+
+### 4.2. Filtros de Admisión Previa
+* **Ubicación:** 
+  * Captura por **GPS automático**: margen de precisión informado $< 50\text{ m}$.
+  * Selección **manual en el mapa**: se admite sin radio de precisión, validando únicamente que las coordenadas pertenezcan al término de Málaga.
+* **Control de duplicados:** Reportes del mismo tipo a $< 150\text{ m}$ en los últimos 20 minutos se vinculan al aviso abierto sin generar prealertas duplicadas.
+
+### 4.3. Verificación Acelerada (*Fast-Track*)
+* Notificación prioritaria a usuarios activos en un radio $\le 300\text{ m}$ ($\le 1000\text{ m}$ en áreas forestales).
+* **Validación rápida:** 1 confirmación institucional (fuerzas de seguridad o protección civil) o 2 confirmaciones ciudadanas validan la urgencia para despacho secundario completo.
+
+### 4.4. Resolución del Aviso
+* **Confirmado:** Pasa a verificado y se completa el despacho a todos los organismos secundarios previstos en la matriz.
+* **Refutado / Falsedad:** Ante 2 rechazos fundados o descarte de patrulla oficial, se emite aviso inmediato de cancelación a los centros notificados.
+* **Sin confirmación (10 minutos):** El aviso **nunca se bloquea ni se anula automáticamente**. Permanece activo y pasa a `Pendiente de Revisión Manual` por los operadores de guardia, manteniendo vigente la prealerta ya enviada.
+
+---
+
+## 5. Delimitación de Alcance Técnico (T2 vs. Futuro)
+
+Para la implementación de la tarea técnica posterior (HU-07 · T2):
+* **Incluido en T2:** Lógica de enrutamiento a organismos según la matriz, flag de urgencia sobre el reporte (`pending`), despacho inmediato a servicios 24/7, cola horaria diferida y registro de entrega con reintentos.
+* **Fuera de alcance (fases posteriores):** Adjuntos fotográficos (el formulario actual de HU-02 sólo contempla texto y coordenadas), sanciones automáticas de usuarios y estados de base de datos adicionales ajenos al ciclo `pending` / `validated` / `rejected` actual.
