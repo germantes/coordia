@@ -16,7 +16,7 @@
     "status": "completados",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-12T18:03:32Z",
+    "updated_at_utc": "2026-11-13T18:02:05Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -152,16 +152,16 @@
       "cut": "d5",
       "label": "cierre",
       "ideal_h": 79.0,
-      "real_h": null,
-      "deviation_h": null,
-      "deviation_pct": null,
-      "hu_accepted": null,
-      "hours_accepted_h": null,
-      "blocked_tasks": null,
-      "block_days": null,
-      "critical_defects": null,
-      "logged_hours": null,
-      "notes": "Pendiente del cierre diario (CTRL-2); null ≠ 0."
+      "real_h": 115.0,
+      "deviation_h": 36.0,
+      "deviation_pct": 22.8,
+      "hu_accepted": 0,
+      "hours_accepted_h": 0.0,
+      "blocked_tasks": 1,
+      "block_days": 2,
+      "critical_defects": 0,
+      "logged_hours": 3.42,
+      "notes": "Cierre del 13/11 a las 19:02 Europe/Madrid. Restante real 115,0 h frente a ideal 79,0 h: desviación 36,0 h = 22,8 % (KPI-2 rojo, por encima del 20 %). Completadas desde d4: HU-02 · T1 (4 h) y HU-01 · T2 (14 h). Ninguna HU padre aceptada: siguen en sprint backlog y con los criterios de aceptación sin resolver. H1 sigue sin cumplirse: HU-07 · T1 (5 h, 869fc71bc) sigue en revisión; dos días laborables de retraso (KPI-3 rojo). HU-05 · T2 (869fc6zwa, 12 h) sigue en «necesita ayuda»: 1 bloqueo, días-bloqueo 2. 0 defectos DEF urgentes. Horas registradas acumuladas: 3,42 h."
     },
     {
       "date": "2026-11-16",
@@ -384,7 +384,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -394,7 +394,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-12T18:03:32Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-13T18:02:05Z: completados.",
       "url": "https://app.clickup.com/t/869fc68h6"
     },
     {
@@ -442,7 +442,7 @@
       "start": "2026-11-09",
       "due": "2026-11-11",
       "milestone": "H1",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -452,7 +452,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-13T18:02:05Z: completados.",
       "url": "https://app.clickup.com/t/869fc6agd"
     },
     {
@@ -1125,7 +1125,7 @@
   ],
   "invariants": {
     "daily_rows": 11,
-    "daily_filled_rows": 5,
+    "daily_filled_rows": 6,
     "audit_rows": 25,
     "hu_subtasks": 18,
     "ctrl_tasks": 7,
@@ -1141,12 +1141,19 @@
     "baseline_B0_h": 158.0,
     "N0": 6,
     "people": 9,
-    "open_remaining_h": 133.0,
+    "open_remaining_h": 115.0,
     "logged_hours": 3.42,
     "blocked_tasks": 1,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "1.6",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-13",
+      "change": "Cierre d5: restante real 115,0 h, ideal 79,0 h, desviación 36,0 h (22,8 %, rojo). HU-02 · T1 y HU-01 · T2 completadas. H1 sigue sin cumplirse (2 días, KPI-3 rojo). 0 HU aceptadas, 1 bloqueo, 0 críticos. Horas registradas 3,42.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "1.5",
       "baseline": "LB-S2-v1",

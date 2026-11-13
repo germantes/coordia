@@ -1,6 +1,6 @@
 # CTRL-1 · Registro de control — Sprint 2
 
-> **Fuente canónica: el repositorio** (`docs/control/registro-sprint-2.json`). Versión `LB-S2-v1` · registro `1.5` · actualizado `2026-11-12T18:03:32Z` · tarea CTRL-1 `completados`.  
+> **Fuente canónica: el repositorio** (`docs/control/registro-sprint-2.json`). Versión `LB-S2-v1` · registro `1.6` · actualizado `2026-11-13T18:02:05Z` · tarea CTRL-1 `completados`.  
 > Si eres un agente: lee el contrato (§0) y el JSON. El Doc de ClickUp `2kxv5w3j-132` está congelado desde `2026-11-10T13:22:14Z`; no lo escribas.
 
 ## 0\. Contrato para agentes y MCP
@@ -96,7 +96,7 @@ Cortes d1–d10 al cierre de cada día laborable (09–20/11). El 23/11 es front
 | 2026-11-10 | d2 | cierre | 126.4 | 153.0 | 26.6 | 16.8 | 0 | 0.0 | 0 | 0 | 0 | 2.25 | Cierre 10/11 19:02 Europe/Madrid. KPI-2 = 16,8 % (ámbar). HU-04 · T1 completada (5 h); 0 HU aceptadas. 0 bloqueos y 0 críticos. |
 | 2026-11-11 | d3 | cierre | 110.6 | 148.0 | 37.4 | 23.7 | 0 | 0.0 | 0 | 0 | 0 | 2.25 | Cierre 11/11 19:01 Europe/Madrid. KPI-2 = 23,7 % (rojo). HU-11 · T1 completada. H1 no cumplido. 0 HU aceptadas, 0 bloqueos, 0 críticos. |
 | 2026-11-12 | d4 | cierre | 94.8 | 133.0 | 38.2 | 24.2 | 0 | 0.0 | 1 | 1 | 0 | 3.42 | Cierre 12/11 19:03 Europe/Madrid. KPI-2 = 24,2 % (rojo). CTRL-1, HU-01 · T1 y HU-05 · T1 completadas. H1 sigue sin cumplirse (KPI-3 ámbar, 1 día). 1 bloqueo (HU-05 · T2), 0 críticos, 0 HU aceptadas. |
-| 2026-11-13 | d5 | cierre | 79.0 | — | — | — | — | — | — | — | — | — | Pendiente del cierre diario (CTRL-2); null ≠ 0. |
+| 2026-11-13 | d5 | cierre | 79.0 | 115.0 | 36.0 | 22.8 | 0 | 0.0 | 1 | 2 | 0 | 3.42 | Cierre 13/11 19:02 Europe/Madrid. KPI-2 = 22,8 % (rojo). HU-02 · T1 y HU-01 · T2 completadas. H1 sigue sin cumplirse (KPI-3 rojo, 2 días). 1 bloqueo (HU-05 · T2), días-bloqueo 2, 0 críticos, 0 HU aceptadas. |
 | 2026-11-16 | d6 | cierre | 63.2 | — | — | — | — | — | — | — | — | — | Pendiente del cierre diario (CTRL-2); null ≠ 0. |
 | 2026-11-17 | d7 | cierre | 47.4 | — | — | — | — | — | — | — | — | — | Pendiente del cierre diario (CTRL-2); null ≠ 0. |
 | 2026-11-18 | d8 | cierre | 31.6 | — | — | — | — | — | — | — | — | — | Pendiente del cierre diario (CTRL-2); null ≠ 0. |
@@ -131,16 +131,16 @@ Cortes d1–d10 al cierre de cada día laborable (09–20/11). El 23/11 es front
 
 ## 4\. Auditoría de tareas
 
-Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las HU y CTRL padre son contenedores y no se incluyen en la comprobación de hoja.
+Leída de ClickUp el 2026-11-13T18:02:05Z. 18 subtareas HU + 7 tareas CTRL. Las HU y CTRL padre son contenedores y no se incluyen en la comprobación de hoja.
 
 ### 4.1 Subtareas HU
 
 | HU | Tipo | Task ID | Tarea | Responsable | Revisor | Fuente revisor | Estimación h | Inicio | Vencimiento | Hito | Estado | Checks OK | Notas |
 | ---| ---| ---| ---| ---| ---| ---| ---| ---| ---| ---| ---| ---| --- |
 | HU-01 | T1 | 869fc68ek | T1 - Definir datos de cuenta, validaciones y flujo de sesión | Laura | Damián Verde, Germán Torres Tendero | field | 3.5 | 2026-11-09 | 2026-11-11 | H1 | completados | true |  |
-| HU-01 | T2 | 869fc68h6 | T2 - Implementar registro, autenticación y cierre de sesión en API e interfaz | Damián Verde | María del Mar Madrid Delgado | field | 14.0 | 2026-11-12 | 2026-11-17 | H2 | en revisión | true |  |
+| HU-01 | T2 | 869fc68h6 | T2 - Implementar registro, autenticación y cierre de sesión en API e interfaz | Damián Verde | María del Mar Madrid Delgado | field | 14.0 | 2026-11-12 | 2026-11-17 | H2 | completados | true |  |
 | HU-01 | T3 | 869fc68p3 | T3 - Probar altas, duplicados, credenciales inválidas y acceso tras cerrar sesión | Germán Torres Tendero | Vicente Durán Morales | field | 4.5 | 2026-11-18 | 2026-11-19 | H3 | sprint backlog | true |  |
-| HU-02 | T1 | 869fc6agd | T1 - Diseñar formulario, categorías iniciales y contrato de creación del reporte | Laura | María del Mar Madrid Delgado | field | 4.0 | 2026-11-09 | 2026-11-11 | H1 | en revisión | true |  |
+| HU-02 | T1 | 869fc6agd | T1 - Diseñar formulario, categorías iniciales y contrato de creación del reporte | Laura | María del Mar Madrid Delgado | field | 4.0 | 2026-11-09 | 2026-11-11 | H1 | completados | true |  |
 | HU-02 | T2 | 869fc6ah1 | T2 - Implementar captura de ubicación, validación y persistencia del reporte | Fernando Bravo Torres | Damián Verde | field | 12.0 | 2026-11-12 | 2026-11-17 | H2 | sprint backlog | true |  |
 | HU-02 | T3 | 869fc6aht | T3 - Probar envío correcto, datos incompletos, GPS no disponible y fallo de conexión | María del Mar Madrid Delgado | Germán Torres Tendero | field | 5.0 | 2026-11-18 | 2026-11-19 | H3 | sprint backlog | true |  |
 | HU-04 | T1 | 869fc6ucj | T1 - Definir proximidad, duplicados y tratamiento de cambios de opinión | Laura | Vicente Durán Morales | field | 5.0 | 2026-11-09 | 2026-11-11 | H1 | completados | true |  |
@@ -172,7 +172,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
 *   18/18 subtareas HU con responsable, revisor distinto, estimación, inicio y vencimiento según H1/H2/H3 (17 con campo «Revisores»; HU-11 · T3 en descripción).
 *   25/25 tareas hoja (18 HU + 7 CTRL) con responsable, estimación y vencimiento: `{'assignee': True, 'estimate': True, 'due': True}`.
 *   HU-02 y sus 3 subtareas permanecen en «Sprint Backlog»: `False`.
-*   Estados actuales: completados=5, en revisión=3, necesita ayuda=1, sprint backlog=16.
+*   Estados actuales: completados=7, en revisión=1, necesita ayuda=1, sprint backlog=16.
 *   Carga de revisiones: Damián Verde=7, Germán Torres Tendero=4, Alejandro Cerezo Contreras=3, Fernando Bravo Torres=3, Laura=3, María del Mar Madrid Delgado=3, Vicente Durán Morales=3.
 
 ## 5\. Riesgos y decisiones abiertas
@@ -201,7 +201,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
 ```json
 {
   "daily_rows": 11,
-  "daily_filled_rows": 5,
+  "daily_filled_rows": 6,
   "audit_rows": 25,
   "hu_subtasks": 18,
   "ctrl_tasks": 7,
@@ -217,7 +217,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
   "baseline_B0_h": 158.0,
   "N0": 6,
   "people": 9,
-  "open_remaining_h": 133.0,
+  "open_remaining_h": 115.0,
   "logged_hours": 3.42,
   "blocked_tasks": 1,
   "critical_defects": 0
@@ -245,7 +245,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
     "status": "completados",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-12T18:03:32Z",
+    "updated_at_utc": "2026-11-13T18:02:05Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -381,16 +381,16 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
       "cut": "d5",
       "label": "cierre",
       "ideal_h": 79.0,
-      "real_h": null,
-      "deviation_h": null,
-      "deviation_pct": null,
-      "hu_accepted": null,
-      "hours_accepted_h": null,
-      "blocked_tasks": null,
-      "block_days": null,
-      "critical_defects": null,
-      "logged_hours": null,
-      "notes": "Pendiente del cierre diario (CTRL-2); null ≠ 0."
+      "real_h": 115.0,
+      "deviation_h": 36.0,
+      "deviation_pct": 22.8,
+      "hu_accepted": 0,
+      "hours_accepted_h": 0.0,
+      "blocked_tasks": 1,
+      "block_days": 2,
+      "critical_defects": 0,
+      "logged_hours": 3.42,
+      "notes": "Cierre del 13/11 a las 19:02 Europe/Madrid. Restante real 115,0 h frente a ideal 79,0 h: desviación 36,0 h = 22,8 % (KPI-2 rojo, por encima del 20 %). Completadas desde d4: HU-02 · T1 (4 h) y HU-01 · T2 (14 h). Ninguna HU padre aceptada: siguen en sprint backlog y con los criterios de aceptación sin resolver. H1 sigue sin cumplirse: HU-07 · T1 (5 h, 869fc71bc) sigue en revisión; dos días laborables de retraso (KPI-3 rojo). HU-05 · T2 (869fc6zwa, 12 h) sigue en «necesita ayuda»: 1 bloqueo, días-bloqueo 2. 0 defectos DEF urgentes. Horas registradas acumuladas: 3,42 h."
     },
     {
       "date": "2026-11-16",
@@ -613,7 +613,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -623,7 +623,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-12T18:03:32Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-13T18:02:05Z: completados.",
       "url": "https://app.clickup.com/t/869fc68h6"
     },
     {
@@ -671,7 +671,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
       "start": "2026-11-09",
       "due": "2026-11-11",
       "milestone": "H1",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -681,7 +681,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-13T18:02:05Z: completados.",
       "url": "https://app.clickup.com/t/869fc6agd"
     },
     {
@@ -1354,7 +1354,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
   ],
   "invariants": {
     "daily_rows": 11,
-    "daily_filled_rows": 5,
+    "daily_filled_rows": 6,
     "audit_rows": 25,
     "hu_subtasks": 18,
     "ctrl_tasks": 7,
@@ -1370,12 +1370,19 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
     "baseline_B0_h": 158.0,
     "N0": 6,
     "people": 9,
-    "open_remaining_h": 133.0,
+    "open_remaining_h": 115.0,
     "logged_hours": 3.42,
     "blocked_tasks": 1,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "1.6",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-13",
+      "change": "Cierre d5: restante real 115,0 h, ideal 79,0 h, desviación 36,0 h (22,8 %, rojo). HU-02 · T1 y HU-01 · T2 completadas. H1 sigue sin cumplirse (2 días, KPI-3 rojo). 0 HU aceptadas, 1 bloqueo, 0 críticos. Horas registradas 3,42.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "1.5",
       "baseline": "LB-S2-v1",
@@ -1426,6 +1433,7 @@ Leída de ClickUp el 2026-11-12T18:03:32Z. 18 subtareas HU + 7 tareas CTRL. Las 
 
 | Versión | Línea base | Fecha | Cambio | Autor |
 | ---| ---| ---| ---| --- |
+| 1.6 | LB-S2-v1 | 2026-11-13 | Cierre d5: restante real 115,0 h, ideal 79,0 h, desviación 36,0 h (22,8 %, rojo). HU-02 · T1 y HU-01 · T2 completadas. H1 sigue sin cumplirse (2 días, KPI-3 rojo). 0 HU aceptadas, 1 bloqueo, 0 críticos. Horas registradas 3,42. | Alejandro Cerezo Contreras |
 | 1.5 | LB-S2-v1 | 2026-11-12 | Cierre d4: restante real 133,0 h, ideal 94,8 h, desviación 38,2 h (24,2 %, rojo). CTRL-1, HU-01 · T1 y HU-05 · T1 completadas. H1 sigue sin cumplirse. 0 HU aceptadas, 1 bloqueo, 0 críticos. Horas registradas 3,42. | Alejandro Cerezo Contreras |
 | 1.4 | LB-S2-v1 | 2026-11-11 | Cierre d3: restante real 148,0 h, desviación 23,7 % (rojo). HU-11 · T1 completada. H1 no cumplido. 0 HU aceptadas, 0 bloqueos, 0 críticos. | Alejandro Cerezo Contreras |
 | 1.3 | LB-S2-v1 | 2026-11-10 | Cierre d2: restante real 153,0 h, desviación 16,8 % (ámbar). HU-04 · T1 completada (5 h). 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 2,25. | Alejandro Cerezo Contreras |
