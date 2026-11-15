@@ -36,4 +36,4 @@ Los roles `dev`, `qa` y `po` son permisos técnicos dentro del perfil **miembro 
 
 ## Estado de persistencia
 
-Los reportes y respuestas se mantienen en memoria durante la ejecución del servidor y se pierden al reiniciarlo. Los endpoints de usuarios y organismos aún requieren repositorios persistentes. Esta matriz describe autorización; no implica que esas operaciones ya cuenten con almacenamiento.
+Los endpoints administrativos de `/api/users` y `/api/organizations` cuentan con persistencia en SQLite mediante `AuthStore` (`backend/src/auth/store.ts`), incluyendo sincronización inmediata de cambios de rol o `organizationId` y revocación de sesiones activas. La gestión de reportes continúa manteniendo el estado de dominio conforme al modelo de reportes vigente.
