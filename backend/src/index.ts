@@ -19,7 +19,7 @@ export function createServer(store = new AuthStore(process.env.AUTH_DB_PATH ?? '
   app.use('/api/auth', authRouter(store));
   app.use(authMiddleware(store));
   app.use('/api/reports', reportsRouter);
-  app.use('/api', administrationRouter);
+  app.use('/api', administrationRouter(store));
 
   const errorHandler: ErrorRequestHandler = (error, _req, res, next) => {
     if (res.headersSent) return next(error);
