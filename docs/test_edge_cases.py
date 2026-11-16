@@ -1,5 +1,9 @@
 from datetime import datetime
 
+# T1 prototype. T2 does not apply the -0.30 shared-origin penalty (IP/subnet/device):
+# nearby honest confirmations share campus or ISP addresses. See
+# docs/control/revisiones/2026-11-16-hu05-t2.md. The -0.40 burst rule stays.
+
 def calcular_confianza(creador, proximidad_m, confirmaciones):
     # 0. Deduplicación por usuario
     confirmaciones_unicas = []
