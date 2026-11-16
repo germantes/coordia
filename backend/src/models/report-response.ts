@@ -1,73 +1,67 @@
-import type { ReportResponseValue } from '../validation/report-response.js';
+import { pool } from './pool.js';
 
-export interface ReportResponseHistoryEntry {
-  previous: ReportResponseValue | null;
-  next: ReportResponseValue;
-  changedAt: string;
-}
-
-export interface ReportResponseRecord {
+export interface ReportResponseData {
   reportId: string;
   userId: string;
-  response: ReportResponseValue;
+  response: string;
   updatedAt: string;
-  proximityVerifiedAt: string;
-  history: ReportResponseHistoryEntry[];
 }
 
-export interface ReportResponseCounts {
-  confirm: number;
-  question: number;
-}
-
-/** Temporary in-memory response store. Replace with a persistent repository when the DB is available. */
 export class ReportResponse {
-  private static readonly records = new Map<string, ReportResponseRecord>();
-
-  private static key(reportId: string | number, userId: string): string {
-    return `${reportId}:${userId}`;
-  }
-
-  static async find(reportId: string | number, userId: string): Promise<ReportResponseRecord | null> {
-    const record = this.records.get(this.key(reportId, userId));
-    return record ? { ...record, history: record.history.map((entry) => ({ ...entry })) } : null;
-  }
-
-  static async counts(reportId: string | number): Promise<ReportResponseCounts> {
-    const counts: ReportResponseCounts = { confirm: 0, question: 0 };
-    for (const record of this.records.values()) {
-      if (String(record.reportId) === String(reportId)) counts[record.response] += 1;
-    }
-    return counts;
-  }
-
-  static async upsert(
-    reportId: string | number,
-    userId: string,
-    response: ReportResponseValue,
-    proximityVerifiedAt: string,
-  ): Promise<{ record: ReportResponseRecord; changed: boolean }> {
-    const key = this.key(reportId, userId);
-    const previous = this.records.get(key);
-    if (previous?.response === response) {
-      return {
-        record: { ...previous, history: previous.history.map((entry) => ({ ...entry })) },
-        changed: false,
-      };
+  static async upsert(reportId: string, userId: string, response: string, updatedAt: string): Promise<{ record: ReportResponseData, changed: boolean }> {
+    const checkQuery = `SELECT response FROM report_responses WHERE report_id = $1 AND user_id = $2`;
+    const { rows: existingRows } = await pool.query(checkQuery, [reportId, userId]);
+    
+    let changed = true;
+    if (existingRows.length > 0 && existingRows[0].response === response) {
+      changed = false;
     }
 
-    const changedAt = new Date().toISOString();
-    const history = previous?.history.map((entry) => ({ ...entry })) ?? [];
-    history.push({ previous: previous?.response ?? null, next: response, changedAt });
-    const record: ReportResponseRecord = {
-      reportId: String(reportId),
-      userId,
-      response,
-      updatedAt: changedAt,
-      proximityVerifiedAt,
-      history,
+    const query = `
+      INSERT INTO report_responses (report_id, user_id, response, updated_at)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (report_id, user_id) 
+      DO UPDATE SET response = EXCLUDED.response, updated_at = EXCLUDED.updated_at
+      RETURNING *;
+    `;
+    const { rows } = await pool.query(query, [reportId, userId, response, updatedAt]);
+    
+    const record = {
+      reportId: rows[0].report_id,
+      userId: rows[0].user_id,
+      response: rows[0].response,
+      updatedAt: new Date(rows[0].updated_at).toISOString()
     };
-    this.records.set(key, record);
-    return { record: { ...record, history: history.map((entry) => ({ ...entry })) }, changed: true };
+
+    return { record, changed };
+  }
+
+  static async find(reportId: string, userId: string): Promise<ReportResponseData | null> {
+    const query = `SELECT * FROM report_responses WHERE report_id = $1 AND user_id = $2`;
+    const { rows } = await pool.query(query, [reportId, userId]);
+    
+    if (rows.length === 0) return null;
+    return {
+      reportId: rows[0].report_id,
+      userId: rows[0].user_id,
+      response: rows[0].response,
+      updatedAt: new Date(rows[0].updated_at).toISOString()
+    };
+  }
+
+  static async counts(reportId: string): Promise<Record<string, number>> {
+    const query = `
+      SELECT response, COUNT(*) as count 
+      FROM report_responses 
+      WHERE report_id = $1 
+      GROUP BY response
+    `;
+    const { rows } = await pool.query(query, [reportId]);
+    
+    const result: Record<string, number> = {};
+    for (const row of rows) {
+      result[row.response] = parseInt(row.count, 10);
+    }
+    return result;
   }
 }
