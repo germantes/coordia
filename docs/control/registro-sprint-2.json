@@ -16,7 +16,7 @@
     "status": "completados",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-13T18:02:05Z",
+    "updated_at_utc": "2026-11-16T18:00:21Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -168,16 +168,16 @@
       "cut": "d6",
       "label": "cierre",
       "ideal_h": 63.2,
-      "real_h": null,
-      "deviation_h": null,
-      "deviation_pct": null,
-      "hu_accepted": null,
-      "hours_accepted_h": null,
-      "blocked_tasks": null,
-      "block_days": null,
-      "critical_defects": null,
-      "logged_hours": null,
-      "notes": "Pendiente del cierre diario (CTRL-2); null ≠ 0."
+      "real_h": 105.0,
+      "deviation_h": 41.8,
+      "deviation_pct": 26.5,
+      "hu_accepted": 0,
+      "hours_accepted_h": 0.0,
+      "blocked_tasks": 0,
+      "block_days": 2,
+      "critical_defects": 0,
+      "logged_hours": 7.74,
+      "notes": "Cierre del 16/11 a las 19:00 Europe/Madrid. Restante real 105,0 h frente a ideal 63,2 h: desviación 41,8 h = 26,5 % (KPI-2 rojo, por encima del 20 %). Completadas desde d5: HU-07 · T1 (5 h) y HU-04 · T3 (5 h). Ninguna HU padre aceptada: siguen en sprint backlog y con los criterios de aceptación sin resolver. H1 queda cubierto con retraso: HU-07 · T1 pasó a completados. HU-05 · T2 (869fc6zwa, 12 h) sale de «necesita ayuda» y está en revisión: 0 bloqueos, días-bloqueo 2. En revisión las T2 de HU-02, HU-04, HU-05, HU-07 y HU-11, y HU-01 · T3. CTRL-5 (1,5 h) vence hoy y sigue en sprint backlog. 0 defectos DEF urgentes. Horas registradas acumuladas: 7,74 h."
     },
     {
       "date": "2026-11-17",
@@ -413,7 +413,7 @@
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "en revisión",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -423,7 +423,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
       "url": "https://app.clickup.com/t/869fc68p3"
     },
     {
@@ -471,7 +471,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "sprint backlog",
+      "status": "en revisión",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -481,7 +481,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
       "url": "https://app.clickup.com/t/869fc6ah1"
     },
     {
@@ -558,7 +558,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "sprint backlog",
+      "status": "en revisión",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -568,7 +568,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
       "url": "https://app.clickup.com/t/869fc6udf"
     },
     {
@@ -587,7 +587,7 @@
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -597,7 +597,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: completados.",
       "url": "https://app.clickup.com/t/869fc6vwh"
     },
     {
@@ -645,7 +645,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "necesita ayuda",
+      "status": "en revisión",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -655,7 +655,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-12T18:03:32Z: necesita ayuda.",
+      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
       "url": "https://app.clickup.com/t/869fc6zwa"
     },
     {
@@ -703,7 +703,7 @@
       "start": "2026-11-09",
       "due": "2026-11-11",
       "milestone": "H1",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -713,7 +713,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-12T18:03:32Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: completados.",
       "url": "https://app.clickup.com/t/869fc71bc"
     },
     {
@@ -732,7 +732,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "sprint backlog",
+      "status": "en revisión",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -742,7 +742,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
       "url": "https://app.clickup.com/t/869fc71by"
     },
     {
@@ -819,7 +819,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "sprint backlog",
+      "status": "en revisión",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -829,7 +829,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
       "url": "https://app.clickup.com/t/869fc767g"
     },
     {
@@ -964,7 +964,7 @@
       "start": "2026-11-10",
       "due": "2026-11-17",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "en curso",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -974,7 +974,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en curso. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2d"
     },
     {
@@ -1092,7 +1092,7 @@
     },
     {
       "id": "R-04",
-      "risk": "Solo 3,42 h registradas, repartidas entre CTRL-1, HU-04 · T1 y HU-07 · T1. M-5 sigue con poca muestra.",
+      "risk": "Solo 7,74 h registradas, repartidas entre CTRL-1, CTRL-4, HU-01 · T3, HU-04 · T1, HU-07 · T1, HU-07 · T2 y HU-11 · T2. M-5 sigue con poca muestra.",
       "impact": "Medio",
       "decision": "Cada persona registra con timer o entrada manual; no rellenar con la estimación.",
       "owner": "Equipo",
@@ -1125,7 +1125,7 @@
   ],
   "invariants": {
     "daily_rows": 11,
-    "daily_filled_rows": 6,
+    "daily_filled_rows": 7,
     "audit_rows": 25,
     "hu_subtasks": 18,
     "ctrl_tasks": 7,
@@ -1141,12 +1141,19 @@
     "baseline_B0_h": 158.0,
     "N0": 6,
     "people": 9,
-    "open_remaining_h": 115.0,
-    "logged_hours": 3.42,
-    "blocked_tasks": 1,
+    "open_remaining_h": 105.0,
+    "logged_hours": 7.74,
+    "blocked_tasks": 0,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "1.7",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-16",
+      "change": "Cierre d6: restante real 105,0 h, ideal 63,2 h, desviación 41,8 h (26,5 %, rojo). HU-07 · T1 y HU-04 · T3 completadas. H1 cubierto con retraso. 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 7,74.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "1.6",
       "baseline": "LB-S2-v1",
