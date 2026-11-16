@@ -11,7 +11,13 @@ export interface ReportData {
   status?: string;
   category?: ReportCategory;
   description?: string;
-  location?: { latitude: number; longitude: number };
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracyMeters?: number;
+    source?: 'gps' | 'manual';
+  };
+  urgent?: boolean;
   occurredAt?: string;
   createdAt?: string;
 }
@@ -25,7 +31,13 @@ export class Report {
   ownerId?: string;
   category?: ReportCategory;
   description?: string;
-  location?: { latitude: number; longitude: number };
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracyMeters?: number;
+    source?: 'gps' | 'manual';
+  };
+  urgent?: boolean;
   occurredAt?: string;
   createdAt?: string;
   private static readonly records = new Map<string, ReportData>();
