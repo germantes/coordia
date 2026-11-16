@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { AuthStore } from '../src/auth/store.js';
@@ -7,15 +7,16 @@ import { issueAccessToken } from '../src/routes/auth.js';
 import { Role } from '../src/constants/roles.js';
 import { Report } from '../src/models/report.js';
 import { ReportResponse } from '../src/models/report-response.js';
-import {
-  distanceBetweenMeters,
-  MAX_LOCATION_ACCURACY_METERS,
-  MAX_RESPONSE_DISTANCE_METERS,
-} from '../src/validation/report-response.js';
+import { distanceBetweenMeters } from '../src/validation/report-response.js';
+import * as responseValidation from '../src/validation/report-response.js';
 import type { User } from '../src/types/user.js';
 
 // HU-04 está implementada en main (PUT /api/reports/:id/response y POST /api/reports/nearby).
 // El radio inclusivo es 500 m: se rechaza solo si la distancia Haversine es estrictamente mayor.
+
+// Valores acordados en HU-04 T1, independientes de las constantes de producción.
+const EXPECTED_RESPONSE_DISTANCE_METERS = 500;
+const EXPECTED_LOCATION_ACCURACY_METERS = 100;
 
 const ORIGIN = { latitude: 0, longitude: 0 };
 
@@ -31,6 +32,7 @@ beforeEach(async () => {
 });
 
 afterEach(async () => {
+  vi.restoreAllMocks();
   await new Promise<void>((resolve) => server.close(() => resolve()));
   store.close();
 });
@@ -81,11 +83,11 @@ function longitudeForMeters(meters: number) {
 
 function boundaryPair() {
   let inside = 0;
-  let outside = longitudeForMeters(MAX_RESPONSE_DISTANCE_METERS + 5);
+  let outside = longitudeForMeters(EXPECTED_RESPONSE_DISTANCE_METERS + 5);
   for (let step = 0; step < 60; step += 1) {
     const midpoint = (inside + outside) / 2;
     const distance = distanceBetweenMeters(ORIGIN, { latitude: ORIGIN.latitude, longitude: midpoint });
-    if (distance <= MAX_RESPONSE_DISTANCE_METERS) inside = midpoint;
+    if (distance <= EXPECTED_RESPONSE_DISTANCE_METERS) inside = midpoint;
     else outside = midpoint;
   }
   return {
@@ -130,7 +132,7 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     const organizationId = crypto.randomUUID();
     const report = await createReport(organizationId);
     const inside = longitudeForMeters(100);
-    expect(distanceBetweenMeters(ORIGIN, { latitude: 0, longitude: inside })).toBeLessThan(MAX_RESPONSE_DISTANCE_METERS);
+    expect(distanceBetweenMeters(ORIGIN, { latitude: 0, longitude: inside })).toBeLessThan(EXPECTED_RESPONSE_DISTANCE_METERS);
 
     const confirmer = citizen(organizationId);
     const confirmed = await sendResponse(report.id, confirmer.token, 'confirm', inside);
@@ -155,13 +157,13 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     });
   });
 
-  it('CA-1 accepts the configured accuracy and age limits when the citizen is inside the radius', async () => {
+  it('CA-1 accepts the agreed 100 m accuracy and age limits when the citizen is inside the radius', async () => {
     const organizationId = crypto.randomUUID();
     const report = await createReport(organizationId);
     const actor = citizen(organizationId);
     const capturedAt = new Date(Date.now() - (5 * 60 * 1000 - 2_000)).toISOString();
     const response = await sendResponse(report.id, actor.token, 'confirm', longitudeForMeters(50), {
-      accuracyMeters: MAX_LOCATION_ACCURACY_METERS,
+      accuracyMeters: EXPECTED_LOCATION_ACCURACY_METERS,
       capturedAt,
     });
 
@@ -171,10 +173,10 @@ describe('HU-04 acceptance: confirm or question a report', () => {
 
   it('accepts a location on the inclusive 500 m boundary and rejects the next point outside it', async () => {
     const boundary = boundaryPair();
-    expect(boundary.insideDistance).toBeLessThanOrEqual(MAX_RESPONSE_DISTANCE_METERS);
-    expect(boundary.outsideDistance).toBeGreaterThan(MAX_RESPONSE_DISTANCE_METERS);
-    expect(MAX_RESPONSE_DISTANCE_METERS - boundary.insideDistance).toBeLessThan(0.001);
-    expect(boundary.outsideDistance - MAX_RESPONSE_DISTANCE_METERS).toBeLessThan(0.001);
+    expect(boundary.insideDistance).toBeLessThanOrEqual(EXPECTED_RESPONSE_DISTANCE_METERS);
+    expect(boundary.outsideDistance).toBeGreaterThan(EXPECTED_RESPONSE_DISTANCE_METERS);
+    expect(EXPECTED_RESPONSE_DISTANCE_METERS - boundary.insideDistance).toBeLessThan(0.001);
+    expect(boundary.outsideDistance - EXPECTED_RESPONSE_DISTANCE_METERS).toBeLessThan(0.001);
 
     const organizationId = crypto.randomUUID();
     const report = await createReport(organizationId);
@@ -193,11 +195,26 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     expect(await ReportResponse.counts(report.id)).toEqual({ confirm: 1, question: 0 });
   });
 
+  it('accepts an exactly 500 m distance, including equality in the proximity check', async () => {
+    const organizationId = crypto.randomUUID();
+    const report = await createReport(organizationId);
+    const actor = citizen(organizationId);
+
+    // Haversine puede redondear los puntos contiguos a 499.99999999999994 y
+    // 500.00000000000006. El caso anterior usa coordenadas reales; este aísla
+    // la igualdad exacta para detectar una regresión de > a >= en la ruta.
+    vi.spyOn(responseValidation, 'distanceBetweenMeters').mockReturnValue(500);
+    const response = await sendResponse(report.id, actor.token, 'confirm', longitudeForMeters(500));
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({ changed: true, counts: { confirm: 1, question: 0 } });
+    expect(await ReportResponse.find(report.id, actor.user.id)).toMatchObject({ response: 'confirm' });
+  });
+
   it('rejects a location outside the radius without recording a contribution', async () => {
     const organizationId = crypto.randomUUID();
     const report = await createReport(organizationId);
     const outside = longitudeForMeters(800);
-    expect(distanceBetweenMeters(ORIGIN, { latitude: 0, longitude: outside })).toBeGreaterThan(MAX_RESPONSE_DISTANCE_METERS);
+    expect(distanceBetweenMeters(ORIGIN, { latitude: 0, longitude: outside })).toBeGreaterThan(EXPECTED_RESPONSE_DISTANCE_METERS);
 
     const actor = citizen(organizationId);
     const response = await sendResponse(report.id, actor.token, 'confirm', outside);
@@ -214,10 +231,10 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     const report = await createReport(organizationId);
     const actor = citizen(organizationId);
 
-    const imprecise = await sendResponse(report.id, actor.token, 'confirm', 0, { accuracyMeters: MAX_LOCATION_ACCURACY_METERS + 1 });
+    const imprecise = await sendResponse(report.id, actor.token, 'confirm', 0, { accuracyMeters: EXPECTED_LOCATION_ACCURACY_METERS + 1 });
     expect(imprecise.status).toBe(422);
     expect(await imprecise.json()).toEqual({
-      error: `La ubicación debe tener una precisión de ${MAX_LOCATION_ACCURACY_METERS} metros o mejor`,
+      error: 'La ubicación debe tener una precisión de 100 metros o mejor',
     });
 
     const stale = await sendResponse(report.id, actor.token, 'question', 0, {
