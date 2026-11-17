@@ -16,7 +16,7 @@
     "status": "completados",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-16T18:00:21Z",
+    "updated_at_utc": "2026-11-17T18:00:21Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -184,16 +184,16 @@
       "cut": "d7",
       "label": "cierre",
       "ideal_h": 47.4,
-      "real_h": null,
-      "deviation_h": null,
-      "deviation_pct": null,
-      "hu_accepted": null,
-      "hours_accepted_h": null,
-      "blocked_tasks": null,
-      "block_days": null,
-      "critical_defects": null,
-      "logged_hours": null,
-      "notes": "Pendiente del cierre diario (CTRL-2); null ≠ 0."
+      "real_h": 88.5,
+      "deviation_h": 41.1,
+      "deviation_pct": 26.0,
+      "hu_accepted": 0,
+      "hours_accepted_h": 0.0,
+      "blocked_tasks": 0,
+      "block_days": 2,
+      "critical_defects": 0,
+      "logged_hours": 8.98,
+      "notes": "Cierre del 17/11 a las 19:00 Europe/Madrid. Restante real 88,5 h frente a ideal 47,4 h: desviación 41,1 h = 26,0 % (KPI-2 rojo, por encima del 20 %). Completadas desde d6: HU-02 · T2 (12 h) y HU-01 · T3 (4,5 h). Ninguna HU padre aceptada: siguen en sprint backlog y con los criterios de aceptación sin resolver. H2: las T2 de HU-04, HU-05, HU-07 y HU-11 siguen en revisión (51 h). CTRL-4 (1 h) pasa a revisión; CTRL-5 (1,5 h) sigue en sprint backlog un día después de su vencimiento. 0 bloqueos, días-bloqueo 2. 0 defectos DEF urgentes. Horas registradas acumuladas: 8,98 h."
     },
     {
       "date": "2026-11-18",
@@ -413,7 +413,7 @@
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -423,7 +423,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-17T18:00:21Z: completados.",
       "url": "https://app.clickup.com/t/869fc68p3"
     },
     {
@@ -471,7 +471,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -481,7 +481,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-17T18:00:21Z: completados.",
       "url": "https://app.clickup.com/t/869fc6ah1"
     },
     {
@@ -935,7 +935,7 @@
       "start": "2026-11-09",
       "due": "2026-11-23",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "en curso",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -945,7 +945,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Estado en tablero el 2026-11-17T18:00:21Z: en curso. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2c"
     },
     {
@@ -964,7 +964,7 @@
       "start": "2026-11-10",
       "due": "2026-11-17",
       "milestone": "CTRL",
-      "status": "en curso",
+      "status": "en revisión",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -974,7 +974,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en curso. Tarea de control con ventana propia.",
+      "notes": "Estado en tablero el 2026-11-17T18:00:21Z: en revisión. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2d"
     },
     {
@@ -1092,7 +1092,7 @@
     },
     {
       "id": "R-04",
-      "risk": "Solo 7,74 h registradas, repartidas entre CTRL-1, CTRL-4, HU-01 · T3, HU-04 · T1, HU-07 · T1, HU-07 · T2 y HU-11 · T2. M-5 sigue con poca muestra.",
+      "risk": "Solo 8,98 h registradas, repartidas entre CTRL-1, CTRL-4, HU-01 · T3, HU-04 · T1, HU-07 · T1, HU-07 · T2 y HU-11 · T2. M-5 sigue con poca muestra.",
       "impact": "Medio",
       "decision": "Cada persona registra con timer o entrada manual; no rellenar con la estimación.",
       "owner": "Equipo",
@@ -1125,7 +1125,7 @@
   ],
   "invariants": {
     "daily_rows": 11,
-    "daily_filled_rows": 7,
+    "daily_filled_rows": 8,
     "audit_rows": 25,
     "hu_subtasks": 18,
     "ctrl_tasks": 7,
@@ -1141,12 +1141,19 @@
     "baseline_B0_h": 158.0,
     "N0": 6,
     "people": 9,
-    "open_remaining_h": 105.0,
-    "logged_hours": 7.74,
+    "open_remaining_h": 88.5,
+    "logged_hours": 8.98,
     "blocked_tasks": 0,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "1.8",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-17",
+      "change": "Cierre d7: restante real 88,5 h, ideal 47,4 h, desviación 41,1 h (26,0 %, rojo). HU-02 · T2 y HU-01 · T3 completadas. H2 con 4 T2 en revisión. 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 8,98.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "1.7",
       "baseline": "LB-S2-v1",
