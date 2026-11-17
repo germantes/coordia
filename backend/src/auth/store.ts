@@ -1,6 +1,4 @@
-import { createRequire } from 'node:module';
-import { mkdirSync } from 'node:fs';
-import { dirname } from 'node:path';
+import { openDatabase, type Database } from '../database.js';
 import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type { User } from '../types/user.js';
 
@@ -12,19 +10,6 @@ export interface Organization {
   updatedAt: string;
 }
 
-interface Statement {
-  run(...args: unknown[]): { changes: number };
-  get(...args: unknown[]): Record<string, unknown> | undefined;
-  all(...args: unknown[]): Record<string, unknown>[];
-}
-interface Database {
-  exec(sql: string): void;
-  prepare(sql: string): Statement;
-  close(): void;
-}
-const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite') as {
-  DatabaseSync: new (path: string) => Database;
-};
 const hash = (token: string) => createHash('sha256').update(token).digest('hex');
 export const SESSION_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -42,8 +27,7 @@ export class AuthStore {
   private readonly db: Database;
 
   constructor(path: string) {
-    if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
-    this.db = new DatabaseSync(path);
+    this.db = openDatabase(path);
     this.db.exec(`
       PRAGMA busy_timeout = 5000;
       PRAGMA journal_mode = WAL;

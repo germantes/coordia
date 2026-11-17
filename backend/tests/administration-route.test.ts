@@ -6,10 +6,11 @@ import { hashPassword } from '../src/auth/password.js';
 import { Role } from '../src/constants/roles.js';
 import { createServer } from '../src/index.js';
 import { issueAccessToken } from '../src/routes/auth.js';
-import { Report } from '../src/models/report.js';
+import { ReportStore } from '../src/models/report.js';
 import type { User } from '../src/types/user.js';
 
 let store: AuthStore;
+let reports: ReportStore;
 let server: Server;
 let baseUrl: string;
 let cachedPasswordHash: string;
@@ -19,7 +20,8 @@ const samplePassword = 'clave segura administrativa';
 beforeEach(async () => {
   cachedPasswordHash ??= await hashPassword(samplePassword);
   store = new AuthStore(':memory:');
-  server = createServer(store).listen(0, '127.0.0.1');
+  reports = new ReportStore(':memory:');
+  server = createServer(store, reports).listen(0, '127.0.0.1');
   await new Promise<void>((resolve) => server.once('listening', resolve));
   baseUrl = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
@@ -27,6 +29,7 @@ beforeEach(async () => {
 afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
   store.close();
+  reports.close();
 });
 
 function createAccountWithSession(overrides: Partial<User> & { email: string; role: Role }) {
@@ -346,7 +349,7 @@ describe('HU-11 T2: immediate synchronization and session revocation on admin ch
       organizationId: 'org-1',
     });
 
-    const report = await Report.create({
+    const report = reports.create({
       ownerId: 'author-1',
       organizationId: 'org-1',
       status: 'pending',
@@ -373,7 +376,7 @@ describe('HU-11 T2: immediate synchronization and session revocation on admin ch
     })).status).toBe(200);
     expect((await requestJson(`/api/reports/${report.id}`, 'PATCH', qaAccount.token, { status: 'validated' })).status).toBe(200);
 
-    const secondReport = await Report.create({
+    const secondReport = reports.create({
       ownerId: 'author-2',
       organizationId: 'org-1',
       status: 'pending',

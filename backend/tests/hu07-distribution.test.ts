@@ -1,3 +1,6 @@
+import { mkdtempSync, rmSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
@@ -5,6 +8,7 @@ import { AuthStore } from '../src/auth/store.js';
 import { createServer } from '../src/index.js';
 import { issueAccessToken } from '../src/routes/auth.js';
 import { Role } from '../src/constants/roles.js';
+import { ReportStore } from '../src/models/report.js';
 import {
   AgencyCatalog,
   INCIDENT_ROUTING_RULES,
@@ -94,7 +98,7 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
       expect(isDaytimeWorkingHours('2026-11-17T22:30:00Z')).toBe(false);
       expect(isDaytimeWorkingHours('2026-11-15T11:00:00Z')).toBe(false); // Domingo
 
-      // Sábado por la noche -> próximo laborable es Lunes 08:00 Europe/Madrid (07:00 UTC en noviembre)
+      // Sábado por la noche -> próximo laborable es Lunes 08:00 Europe/Madrid (07:00 UTC en horario de invierno)
       expect(nextWorkingWindowStart('2026-11-14T23:15:00Z')).toBe('2026-11-16T07:00:00.000Z');
 
       const nightSummary = ReportDistribution.distributeNewReport({
@@ -108,6 +112,7 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
 
       const primaryDelivery = nightSummary.deliveries.find((d) => d.agencyId === 'policia-local-malaga');
       expect(primaryDelivery?.status).toBe('delivered');
+      expect(ReportDistribution.inbox('policia-local-malaga', { reportId: 'rep-night-accessibility' })).toHaveLength(1);
 
       const queuedDeliveries = nightSummary.deliveries.filter((d) => d.status === 'queued');
       expect(queuedDeliveries.map((d) => d.agencyId)).toEqual([
@@ -117,12 +122,16 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
       ]);
       for (const queued of queuedDeliveries) {
         expect(queued.scheduledFor).toBe('2026-11-16T07:00:00.000Z');
+        expect(ReportDistribution.inbox(queued.agencyId, { reportId: 'rep-night-accessibility' })).toHaveLength(0);
       }
 
-      // Al llegar el lunes a las 08:00 se procesa la cola diferida sin pérdidas
+      // Al llegar el lunes a las 08:00 Europe/Madrid (07:00 UTC) se procesa la cola diferida y cada organismo diurno recibe su aviso en bandeja
       const processed = ReportDistribution.processDueQueue('2026-11-16T07:00:00Z');
       expect(processed).toHaveLength(3);
       expect(processed.every((d) => d.status === 'delivered')).toBe(true);
+      expect(ReportDistribution.inbox('limasam-malaga', { reportId: 'rep-night-accessibility' })).toHaveLength(1);
+      expect(ReportDistribution.inbox('parques-jardines-malaga', { reportId: 'rep-night-accessibility' })).toHaveLength(1);
+      expect(ReportDistribution.inbox('movilidad-malaga', { reportId: 'rep-night-accessibility' })).toHaveLength(1);
     });
 
     it('redirige inmediatamente al retén 24/7 cuando entra una urgencia en categoría diurna fuera de horario', () => {
@@ -193,12 +202,10 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
       expect(summary.fastTrackRadiusMeters).toBe(1000);
       expect(summary.secondaryDispatched).toBe(false);
 
-      // Tras 10 minutos sin confirmación: pasa a pending_manual_review sin cancelar la prealerta
       const afterTenMin = ReportDistribution.checkManualReviewTimeout('rep-forest-1', '2026-11-16T12:11:00Z');
       expect(afterTenMin?.urgentState).toBe('pending_manual_review');
       expect(afterTenMin?.deliveries.every((d) => d.status === 'delivered')).toBe(true);
 
-      // Al recibir 2 confirmaciones ciudadanas: se confirma y se despachan todos los secundarios (Bomberos, Guardia Civil)
       const confirmed = ReportDistribution.recordVerificationSignal({
         reportId: 'rep-forest-1',
         citizenConfirmations: 2,
@@ -239,14 +246,15 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
     });
   });
 
-  describe('4. Registro de entrega con reintentos e integración en rutas HTTP', () => {
+  describe('4. CA-2 y CA-4: Bandeja del organismo receptor, persistencia SQLite tras reinicio e integración HTTP', () => {
     const authStore = new AuthStore(':memory:');
+    const reportStore = new ReportStore(':memory:');
     let server: Server;
     let baseUrl: string;
 
     beforeAll(async () => {
       await new Promise<void>((resolve) => {
-        server = createServer(authStore).listen(0, '127.0.0.1', () => {
+        server = createServer(authStore, reportStore).listen(0, '127.0.0.1', () => {
           const address = server.address() as AddressInfo;
           baseUrl = `http://127.0.0.1:${address.port}`;
           resolve();
@@ -256,7 +264,12 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
 
     afterAll(async () => {
       if (server) await new Promise<void>((resolve, reject) => server.close((error) => error ? reject(error) : resolve()));
+      reportStore.close();
       authStore.close();
+    });
+
+    beforeEach(() => {
+      reportStore.distribution.reset();
     });
 
     function tokenFor(role: Role, id: string, organizationId = 'policia-local-malaga') {
@@ -265,8 +278,91 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
       return issueAccessToken(session.sid, user);
     }
 
-    it('registra fallos de entrega, permite reintentar por API y agota maxAttempts tras 3 fallos', async () => {
-      ReportDistribution.setSimulatedFailure('bomberos-malaga', 'Timeout en pasarela de Bomberos');
+    it('CA-2: crea un reporte y comprueba que el organismo receptor recibe, consulta y acusa recibo del aviso en su bandeja', async () => {
+      const citizenToken = tokenFor(Role.Guest, 'citizen-ca2', 'bomberos-malaga');
+      const createRes = await fetch(`${baseUrl}/api/reports`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${citizenToken}` },
+        body: JSON.stringify({
+          category: 'safety',
+          description: 'Incendio urbano activo en portal de viviendas de calle Larios',
+          location: { latitude: 36.7213, longitude: -4.4214, source: 'gps', accuracyMeters: 12 },
+        }),
+      });
+      expect(createRes.status).toBe(201);
+      const createdReport = await createRes.json() as { id: string; urgent: boolean; status: string };
+      expect(createdReport.urgent).toBe(true);
+
+      // El operador de Bomberos de Málaga consulta su bandeja y observa el aviso con el id del incidente
+      const bomberosOperatorToken = tokenFor(Role.QA, 'qa-bomberos', 'bomberos-malaga');
+      const inboxRes = await fetch(`${baseUrl}/api/reports/inbox?reportId=${createdReport.id}`, {
+        headers: { Authorization: `Bearer ${bomberosOperatorToken}` },
+      });
+      expect(inboxRes.status).toBe(200);
+      const inboxBody = await inboxRes.json() as {
+        agencyId: string;
+        entries: Array<{
+          deliveryId: string;
+          agencyId: string;
+          reportId: string;
+          role: string;
+          receivedAt: string;
+          acknowledgedAt?: string;
+          payload: { incidentType: string; urgent: boolean };
+        }>;
+      };
+      expect(inboxBody.agencyId).toBe('bomberos-malaga');
+      expect(inboxBody.entries).toHaveLength(1);
+      expect(inboxBody.entries[0]).toMatchObject({
+        agencyId: 'bomberos-malaga',
+        reportId: createdReport.id,
+        role: 'pre_alert',
+        payload: { incidentType: 'urban_fire', urgent: true },
+      });
+
+      // El operador de Bomberos acusa recibo del aviso de forma idempotente
+      const deliveryId = inboxBody.entries[0].deliveryId;
+      const ackRes = await fetch(`${baseUrl}/api/reports/inbox/${deliveryId}/acknowledge`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${bomberosOperatorToken}` },
+      });
+      expect(ackRes.status).toBe(200);
+      const ackBody = await ackRes.json() as { deliveryId: string; acknowledgedBy: string; acknowledgedAt: string };
+      expect(ackBody.deliveryId).toBe(deliveryId);
+      expect(ackBody.acknowledgedBy).toBe('qa-bomberos');
+
+      // Otro organismo no autorizado no puede leer la bandeja de Bomberos
+      const emasaOperatorToken = tokenFor(Role.QA, 'qa-emasa', 'emasa-malaga');
+      const forbiddenRes = await fetch(`${baseUrl}/api/reports/inbox/bomberos-malaga`, {
+        headers: { Authorization: `Bearer ${emasaOperatorToken}` },
+      });
+      expect(forbiddenRes.status).toBe(403);
+
+      // Al validarse el reporte en ReportStore, el organismo secundario (061-andalucia) recibe el despacho en su bandeja
+      const patchRes = await fetch(`${baseUrl}/api/reports/${createdReport.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${bomberosOperatorToken}` },
+        body: JSON.stringify({ status: 'validated' }),
+      });
+      expect(patchRes.status).toBe(200);
+
+      const sasOperatorToken = tokenFor(Role.QA, 'qa-061', '061-andalucia');
+      const sasInboxRes = await fetch(`${baseUrl}/api/reports/inbox?reportId=${createdReport.id}`, {
+        headers: { Authorization: `Bearer ${sasOperatorToken}` },
+      });
+      expect(sasInboxRes.status).toBe(200);
+      const sasInbox = await sasInboxRes.json() as { entries: Array<{ reportId: string; agencyId: string; role: string }> };
+      expect(sasInbox.entries).toEqual([
+        expect.objectContaining({
+          reportId: createdReport.id,
+          agencyId: '061-andalucia',
+          role: 'secondary',
+        }),
+      ]);
+    });
+
+    it('registra fallos de entrega, permite reintentar por API y deposita el aviso en la bandeja tras el reintento', async () => {
+      reportStore.distribution.setSimulatedFailure('bomberos-malaga', 'Timeout en pasarela de Bomberos');
 
       const guestToken = tokenFor(Role.Guest, 'citizen-hu07');
       const createRes = await fetch(`${baseUrl}/api/reports`, {
@@ -280,8 +376,9 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
       });
       expect(createRes.status).toBe(201);
       const createdReport = await createRes.json() as { id: string; urgent: boolean; status: string };
-      expect(createdReport.urgent).toBe(true);
-      expect(createdReport.status).toBe('pending');
+
+      // Mientras está en retry_pending, Bomberos aún no tiene el aviso en su bandeja
+      expect(reportStore.distribution.inbox('bomberos-malaga', { reportId: createdReport.id })).toHaveLength(0);
 
       const deliveriesRes = await fetch(`${baseUrl}/api/reports/${createdReport.id}/deliveries`, {
         headers: { Authorization: `Bearer ${guestToken}` },
@@ -299,8 +396,8 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
         lastError: 'Timeout en pasarela de Bomberos',
       });
 
-      // Se restablece el servicio de Bomberos y el admin o QA reintenta por API
-      ReportDistribution.clearSimulatedFailure('bomberos-malaga');
+      // Se restablece el servicio de Bomberos y el admin reintenta por API
+      reportStore.distribution.clearSimulatedFailure('bomberos-malaga');
       const adminToken = tokenFor(Role.Admin, 'admin-hu07');
       const retryRes = await fetch(`${baseUrl}/api/reports/${createdReport.id}/deliveries/retry`, {
         method: 'POST',
@@ -316,35 +413,90 @@ describe('HU-07 · T2 — Catálogo de organismos, matriz de destinatarios, cola
         status: 'delivered',
         attempts: 2,
       });
+      expect(reportStore.distribution.inbox('bomberos-malaga', { reportId: createdReport.id })).toHaveLength(1);
     });
 
-    it('mantiene una única entrega por organismo y procesa automáticamente el reintento programado', () => {
-      ReportDistribution.setSimulatedFailure('bomberos-malaga', 'Pasarela temporalmente no disponible');
-      const first = ReportDistribution.distributeNewReport({
-        reportId: 'rep-idempotent-retry',
-        category: 'safety',
-        description: 'Incendio urbano activo en edificio residencial',
-        location: { latitude: 36.7213, longitude: -4.4214, source: 'gps', accuracyMeters: 15 },
-        createdAt: '2026-11-16T10:00:00Z',
-      });
-      const second = ReportDistribution.distributeNewReport({
-        reportId: 'rep-idempotent-retry',
-        category: 'safety',
-        description: 'Incendio urbano activo en edificio residencial',
-        location: { latitude: 36.7213, longitude: -4.4214, source: 'gps', accuracyMeters: 15 },
-        createdAt: '2026-11-16T10:00:00Z',
-      });
-      expect(second.deliveries).toHaveLength(first.deliveries.length);
-      expect(new Set(second.deliveries.map((delivery) => delivery.id)).size).toBe(first.deliveries.length);
+    it('CA-4: persiste entregas y cola en SQLite y, tras reabrir ReportStore, completa un reintento pendiente sin duplicar entregas ya confirmadas', () => {
+      const dir = mkdtempSync(join(tmpdir(), 'coordia-hu07-persistence-'));
+      const dbPath = join(dir, 'reports.sqlite');
+      let persistentStore = new ReportStore(dbPath);
 
-      const failedDelivery = second.deliveries.find((delivery) => delivery.agencyId === 'bomberos-malaga');
-      expect(failedDelivery).toMatchObject({ status: 'retry_pending', attempts: 1 });
+      try {
+        // Fallo simulado solo en Bomberos; 112 y Policía Local confirman en el primer intento
+        persistentStore.distribution.setSimulatedFailure('bomberos-malaga', 'Caída temporal de red');
+        const created = persistentStore.create({
+          category: 'safety',
+          description: 'Incendio urbano en bloque de viviendas de Málaga',
+          location: { latitude: 36.7213, longitude: -4.4214, source: 'gps', accuracyMeters: 14 },
+          ownerId: 'citizen-persist',
+          organizationId: 'policia-local-malaga',
+          status: 'pending',
+          urgent: true,
+          createdAt: '2026-11-16T10:00:00.000Z',
+        });
 
-      ReportDistribution.clearSimulatedFailure('bomberos-malaga');
-      const processed = ReportDistribution.processDueQueue(failedDelivery!.nextRetryAt!);
-      expect(processed).toHaveLength(1);
-      expect(processed[0]).toMatchObject({ id: failedDelivery!.id, status: 'delivered', attempts: 2 });
-      expect(ReportDistribution.processDueQueue(failedDelivery!.nextRetryAt!)).toHaveLength(0);
+        const beforeRestart = persistentStore.distribution.listDeliveriesForReport(created.id);
+        expect(beforeRestart).toHaveLength(3);
+        expect(beforeRestart.find((d) => d.agencyId === '112-andalucia')).toMatchObject({
+          status: 'delivered',
+          attempts: 1,
+        });
+        expect(beforeRestart.find((d) => d.agencyId === 'policia-local-malaga')).toMatchObject({
+          status: 'delivered',
+          attempts: 1,
+        });
+        const pendingBomberos = beforeRestart.find((d) => d.agencyId === 'bomberos-malaga')!;
+        expect(pendingBomberos).toMatchObject({
+          status: 'retry_pending',
+          attempts: 1,
+        });
+
+        // Simulamos reinicio del proceso cerrando y reabriendo la base SQLite
+        persistentStore.close();
+        persistentStore = new ReportStore(dbPath);
+
+        // El reporte, el historial de entregas y las bandejas confirmadas siguen intactos en SQLite
+        expect(persistentStore.findByPk(created.id)?.id).toBe(created.id);
+        expect(persistentStore.distribution.inbox('112-andalucia', { reportId: created.id })).toHaveLength(1);
+        expect(persistentStore.distribution.inbox('policia-local-malaga', { reportId: created.id })).toHaveLength(1);
+        expect(persistentStore.distribution.inbox('bomberos-malaga', { reportId: created.id })).toHaveLength(0);
+
+        // Al completar el reintento pendiente tras reabrir: Bomberos pasa a delivered y no se duplican las entregas ya confirmadas
+        const retried = persistentStore.distribution.retryPendingDeliveries({
+          reportId: created.id,
+          now: '2026-11-16T10:02:00.000Z',
+        });
+        expect(retried).toHaveLength(1);
+        expect(retried[0]).toMatchObject({
+          id: pendingBomberos.id,
+          agencyId: 'bomberos-malaga',
+          status: 'delivered',
+          attempts: 2,
+        });
+
+        // Reintentar de nuevo una entrega ya confirmada o re-distribuir el mismo reporte es idempotente
+        persistentStore.distribution.retryDelivery(pendingBomberos.id, '2026-11-16T10:03:00.000Z');
+        persistentStore.distribution.distributeNewReport({
+          reportId: created.id,
+          category: 'safety',
+          description: 'Incendio urbano en bloque de viviendas de Málaga',
+          location: { latitude: 36.7213, longitude: -4.4214, source: 'gps', accuracyMeters: 14 },
+          createdAt: '2026-11-16T10:00:00.000Z',
+          urgent: true,
+        });
+
+        const afterRetry = persistentStore.distribution.listDeliveriesForReport(created.id);
+        expect(afterRetry).toHaveLength(3);
+        expect(afterRetry.find((d) => d.agencyId === '112-andalucia')?.attempts).toBe(1);
+        expect(afterRetry.find((d) => d.agencyId === 'policia-local-malaga')?.attempts).toBe(1);
+        expect(afterRetry.find((d) => d.agencyId === 'bomberos-malaga')?.attempts).toBe(2);
+        expect(persistentStore.distribution.inbox('112-andalucia', { reportId: created.id })).toHaveLength(1);
+        expect(persistentStore.distribution.inbox('policia-local-malaga', { reportId: created.id })).toHaveLength(1);
+        expect(persistentStore.distribution.inbox('bomberos-malaga', { reportId: created.id })).toHaveLength(1);
+      } finally {
+        persistentStore.close();
+        rmSync(dir, { recursive: true, force: true });
+      }
     });
   });
 });
