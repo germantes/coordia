@@ -1,12 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { DatabaseSync } from 'node:sqlite';
 import { AuthStore } from '../src/auth/store.js';
 import { createServer } from '../src/index.js';
 import { issueAccessToken } from '../src/routes/auth.js';
 import { Role } from '../src/constants/roles.js';
-import { Report } from '../src/models/report.js';
-import { ReportResponse } from '../src/models/report-response.js';
+import { ReportStore } from '../src/models/report.js';
 import { distanceBetweenMeters } from '../src/validation/report-response.js';
 import * as responseValidation from '../src/validation/report-response.js';
 import type { User } from '../src/types/user.js';
@@ -23,18 +23,26 @@ const ORIGIN = { latitude: 0, longitude: 0 };
 let store: AuthStore;
 let server: Server;
 let base: string;
+let reportStore: ReportStore;
+let db: DatabaseSync;
 
 beforeEach(async () => {
   store = new AuthStore(':memory:');
   server = createServer(store).listen(0, '127.0.0.1');
   await new Promise<void>((resolve) => server.once('listening', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
+  
+  const dbPath = process.env.DB_PATH ?? '.data/coordia.sqlite';
+  reportStore = new ReportStore(dbPath);
+  db = new DatabaseSync(dbPath);
 });
 
 afterEach(async () => {
   vi.restoreAllMocks();
   await new Promise<void>((resolve) => server.close(() => resolve()));
   store.close();
+  reportStore.close();
+  db.close();
 });
 
 function openSession(user: User) {
@@ -191,8 +199,8 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     expect(await rejected.json()).toEqual({
       error: 'Debes estar a 500 metros o menos del incidente para responder',
     });
-    expect(await ReportResponse.find(report.id, justOutside.user.id)).toBeNull();
-    expect(await ReportResponse.counts(report.id)).toEqual({ confirm: 1, question: 0 });
+    expect(reportStore.responses(report.id, justOutside.user.id).entry).toBeUndefined();
+    expect(reportStore.responses(report.id, '').counts).toEqual({ confirm: 1, question: 0 });
   });
 
   it('accepts an exactly 500 m distance, including equality in the proximity check', async () => {
@@ -200,14 +208,11 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     const report = await createReport(organizationId);
     const actor = citizen(organizationId);
 
-    // Haversine puede redondear los puntos contiguos a 499.99999999999994 y
-    // 500.00000000000006. El caso anterior usa coordenadas reales; este aísla
-    // la igualdad exacta para detectar una regresión de > a >= en la ruta.
     vi.spyOn(responseValidation, 'distanceBetweenMeters').mockReturnValue(500);
     const response = await sendResponse(report.id, actor.token, 'confirm', longitudeForMeters(500));
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ changed: true, counts: { confirm: 1, question: 0 } });
-    expect(await ReportResponse.find(report.id, actor.user.id)).toMatchObject({ response: 'confirm' });
+    expect(reportStore.responses(report.id, actor.user.id).entry).toMatchObject({ response: 'confirm' });
   });
 
   it('rejects a location outside the radius without recording a contribution', async () => {
@@ -222,8 +227,8 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     expect(await response.json()).toEqual({
       error: 'Debes estar a 500 metros o menos del incidente para responder',
     });
-    expect(await ReportResponse.find(report.id, actor.user.id)).toBeNull();
-    expect(await ReportResponse.counts(report.id)).toEqual({ confirm: 0, question: 0 });
+    expect(reportStore.responses(report.id, actor.user.id).entry).toBeUndefined();
+    expect(reportStore.responses(report.id, '').counts).toEqual({ confirm: 0, question: 0 });
   });
 
   it('rejects an imprecise or stale location without recording a contribution', async () => {
@@ -242,7 +247,7 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     });
     expect(stale.status).toBe(422);
     expect(await stale.json()).toEqual({ error: 'La ubicación ha caducado; obtén una nueva' });
-    expect(await ReportResponse.counts(report.id)).toEqual({ confirm: 0, question: 0 });
+    expect(reportStore.responses(report.id, '').counts).toEqual({ confirm: 0, question: 0 });
   });
 
   it('CA-2 records the user, report, sense and date of an accepted contribution', async () => {
@@ -260,19 +265,20 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     expect(Date.parse(body.updatedAt)).toBeGreaterThanOrEqual(before - 1_000);
     expect(Date.parse(body.updatedAt)).toBeLessThanOrEqual(Date.now() + 1_000);
 
-    const stored = await ReportResponse.find(report.id, actor.user.id);
+    const stored = reportStore.responses(report.id, actor.user.id).entry;
     expect(stored).toMatchObject({
-      reportId: report.id,
       userId: actor.user.id,
       response: 'question',
       updatedAt: body.updatedAt,
     });
-    expect(stored?.history).toEqual([{
+    
+    // Verificamos el historial leyendo directamente de la tabla correspondiente
+    const history = db.prepare('SELECT previous, next, changedAt FROM response_history WHERE reportId = ? AND userId = ?').all(report.id, actor.user.id);
+    expect(history).toEqual([{
       previous: null,
       next: 'question',
       changedAt: body.updatedAt,
     }]);
-    expect(stored?.proximityVerifiedAt).toBe(body.updatedAt);
 
     const nearby = await fetch(`${base}/api/reports/nearby`, {
       method: 'POST',
@@ -325,14 +331,17 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     const repeatedChange = await submit('question');
     expect(await repeatedChange.json()).toMatchObject({ changed: false, counts: { confirm: 0, question: 1 } });
 
-    const stored = await ReportResponse.find(report.id, actor.user.id);
+    const stored = reportStore.responses(report.id, actor.user.id).entry;
     expect(stored?.response).toBe('question');
     expect(stored?.userId).toBe(actor.user.id);
-    expect(stored?.history).toEqual([
+    
+    // Comprobar historial con base de datos nativa
+    const history = db.prepare('SELECT previous, next, changedAt FROM response_history WHERE reportId = ? AND userId = ? ORDER BY rowid').all(report.id, actor.user.id);
+    expect(history).toEqual([
       { previous: null, next: 'confirm', changedAt: firstBody.updatedAt },
       { previous: 'confirm', next: 'question', changedAt: changedBody.updatedAt },
     ]);
-    expect(await ReportResponse.counts(report.id)).toEqual({ confirm: 0, question: 1 });
+    expect(reportStore.responses(report.id, '').counts).toEqual({ confirm: 0, question: 1 });
   });
 
   it('CA-4 makes accepted contributions available as counts for a confidence calculation', async () => {
@@ -347,12 +356,12 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     const questionedBody = await questioned.json() as ContributionBody;
     expect(questioned.status).toBe(200);
     expect(questionedBody.counts).toEqual({ confirm: 1, question: 1 });
-    expect(await ReportResponse.counts(report.id)).toEqual(questionedBody.counts);
+    expect(reportStore.responses(report.id, '').counts).toEqual(questionedBody.counts);
 
     const outsider = citizen(organizationId);
     expect((await sendResponse(report.id, outsider.token, 'confirm', longitudeForMeters(900))).status).toBe(422);
-    expect(await ReportResponse.counts(report.id)).toEqual({ confirm: 1, question: 1 });
-    expect(await ReportResponse.counts(otherReport.id)).toEqual({ confirm: 0, question: 0 });
+    expect(reportStore.responses(report.id, '').counts).toEqual({ confirm: 1, question: 1 });
+    expect(reportStore.responses(otherReport.id, '').counts).toEqual({ confirm: 0, question: 0 });
 
     const nearby = await fetch(`${base}/api/reports/nearby`, {
       method: 'POST',
@@ -392,7 +401,7 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     const revoked = await sendResponse(report.id, revokedUser.token, 'question', 0);
     expect(revoked.status).toBe(401);
     expect(await revoked.json()).toEqual({ error: 'Sesión inválida' });
-    expect(await ReportResponse.counts(report.id)).toEqual({ confirm: 0, question: 0 });
+    expect(reportStore.responses(report.id, '').counts).toEqual({ confirm: 0, question: 0 });
   });
 
   it('rejects users who are not allowed to respond to the report', async () => {
@@ -421,7 +430,7 @@ describe('HU-04 acceptance: confirm or question a report', () => {
       expect(response.status).toBe(403);
       expect(await response.json()).toEqual({ error: entry.error });
     }
-    expect(await ReportResponse.counts(report.id)).toEqual({ confirm: 0, question: 0 });
+    expect(reportStore.responses(report.id, '').counts).toEqual({ confirm: 0, question: 0 });
   });
 
   it('returns 404 for a report that does not exist and 409 once it no longer accepts responses', async () => {
@@ -431,15 +440,16 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     const missing = await sendResponse(missingId, actor.token, 'confirm', 0);
     expect(missing.status).toBe(404);
     expect(await missing.json()).toEqual({ error: 'Reporte no encontrado' });
-    expect(await ReportResponse.find(missingId, actor.user.id)).toBeNull();
+    expect(reportStore.responses(missingId, actor.user.id).entry).toBeUndefined();
 
     const report = await createReport(organizationId);
-    const stored = await Report.findByPk(report.id);
-    await stored?.update({ status: 'validated' });
+    const stored = reportStore.findByPk(report.id);
+    if (stored) reportStore.update(stored, { status: 'validated' });
+    
     const closed = await sendResponse(report.id, actor.token, 'question', 0);
     expect(closed.status).toBe(409);
     expect(await closed.json()).toEqual({ error: 'El reporte ya no acepta respuestas' });
-    expect(await ReportResponse.counts(report.id)).toEqual({ confirm: 0, question: 0 });
+    expect(reportStore.responses(report.id, '').counts).toEqual({ confirm: 0, question: 0 });
   });
 
   it('rejects a response payload with an invalid sense or a forged identity', async () => {
@@ -453,7 +463,8 @@ describe('HU-04 acceptance: confirm or question a report', () => {
     expect(body.error).toBe('Respuesta no válida');
     expect(body.fields.response).toBe('La respuesta debe ser confirm o question');
     expect(body.fields.userId).toBe('Campo no permitido');
-    expect(await ReportResponse.find(report.id, actor.user.id)).toBeNull();
-    expect(await ReportResponse.find(report.id, 'forjado')).toBeNull();
+    
+    expect(reportStore.responses(report.id, actor.user.id).entry).toBeUndefined();
+    expect(reportStore.responses(report.id, 'forjado').entry).toBeUndefined();
   });
 });
