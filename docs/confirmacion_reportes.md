@@ -70,5 +70,5 @@ Respuestas HTTP: `200` con la respuesta actual y los contadores; `400` por datos
 ## 7. Dependencias y límites
 
 - El flujo se limita al rol ciudadano autenticado (`guest`) con organismo asignado. La matriz general sigue restringiendo la lectura de reportes ajenos; el nuevo endpoint de cercanía es una excepción acotada y devuelve campos no sensibles.
-- Las respuestas e historial se guardan en memoria, igual que los reportes. La unicidad funciona durante la ejecución del proceso, pero se pierde al reiniciarlo y no coordina varias instancias; falta persistencia para producción.
+- SQLite conserva las respuestas, su historial y la verificación asociada. La combinación reporte/usuario identifica una única aportación activa.
 - El flujo requiere una identidad autenticada con `userId` estable y un `organizationId` en el token. La detección automática de duplicados sigue pendiente de implementación según `reglas_reportes.md`.

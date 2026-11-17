@@ -70,6 +70,7 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
   const [description, setDescription] = useState('');
   const [occurredAt, setOccurredAt] = useState('');
   const [location, setLocation] = useState<Coordinates | null>(null);
+  const [creatorObservation, setCreatorObservation] = useState<LocationObservation | null>(null);
   const [fields, setFields] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -137,7 +138,9 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
     setLocating(true);
     setFormError('');
     navigator.geolocation.getCurrentPosition(
-      ({ coords }) => {
+      ({ coords, timestamp }) => {
+        setCreatorObservation({ latitude: coords.latitude, longitude: coords.longitude,
+          accuracyMeters: coords.accuracy, capturedAt: new Date(timestamp).toISOString() });
         setLocation({ latitude: coords.latitude, longitude: coords.longitude });
         setLocating(false);
       },
@@ -173,6 +176,7 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
       category,
       description,
       location,
+      ...(creatorObservation ? { creatorObservation } : {}),
       ...(occurredAt ? { occurredAt: localDateTimeToIso(occurredAt) } : {}),
     };
 
@@ -194,6 +198,7 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
       setDescription('');
       setOccurredAt('');
       setLocation(null);
+      setCreatorObservation(null);
     } catch (error) {
       if (error instanceof SessionExpired) return onExpire();
       setFormError('No se pudo conectar con el servidor. Revisa la conexión e inténtalo de nuevo.');

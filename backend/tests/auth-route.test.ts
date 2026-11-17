@@ -4,12 +4,14 @@ import type { AddressInfo } from 'node:net';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { ReportStore } from '../src/models/report.js';
 import { AuthStore } from '../src/auth/store.js';
 import { createServer } from '../src/index.js';
 import { Role } from '../src/constants/roles.js';
 import { hashPassword } from '../src/auth/password.js';
 
 let store: AuthStore;
+let reportStore: ReportStore;
 let server: Server;
 let base: string;
 const credentials = { email: 'laura@example.test', password: '  exact long password  ' };
@@ -18,13 +20,15 @@ const user = { id: 'citizen', email: credentials.email, role: Role.Guest, organi
 beforeEach(async () => {
   store = new AuthStore(':memory:');
   store.addAccount(user, await hashPassword(credentials.password));
-  server = createServer(store).listen(0, '127.0.0.1');
+  reportStore = new ReportStore(':memory:');
+  server = createServer(store, reportStore).listen(0, '127.0.0.1');
   await new Promise<void>((resolve) => server.once('listening', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
 afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
   store.close();
+  reportStore.close();
 });
 
 function post(path: string, body: unknown = {}, headers: Record<string, string> = {}) {
