@@ -21,4 +21,4 @@ const { DatabaseSync } = createRequire(import.meta.url)('node:sqlite') as {
 export function openDatabase(path: string): Database {
   if (path !== ':memory:') mkdirSync(dirname(path), { recursive: true });
   return new DatabaseSync(path);
-} 
+}
