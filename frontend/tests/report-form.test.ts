@@ -2,6 +2,7 @@ import { expect, it } from 'vitest';
 import {
   nextReportFormState,
   REPORT_FORM_MESSAGES,
+  submitErrorFeedback,
   validateClientReport,
 } from '../src/reportForm.js';
 
@@ -48,18 +49,39 @@ it('CA-2 explains GPS unavailability and permission errors in Spanish', () => {
 });
 
 it('CA-4 keeps the draft in session when the send is not confirmed', () => {
-  const network = nextReportFormState(draft, { type: 'network-error' });
-  const api = nextReportFormState(draft, {
-    type: 'api-error',
-    error: 'Datos del reporte no válidos',
-    fields: { description: 'La descripción debe tener entre 10 y 2.000 caracteres' },
-  });
+  const network = { ...draft, ...submitErrorFeedback({ type: 'network-error' }) };
+  const api = {
+    ...draft,
+    ...submitErrorFeedback({
+      type: 'api-error',
+      error: 'Datos del reporte no válidos',
+      fields: { description: 'La descripción debe tener entre 10 y 2.000 caracteres' },
+    }),
+  };
 
   expect(network.formError).toBe(REPORT_FORM_MESSAGES.connectionFailed);
   expect(network.success).toBeNull();
   expect(network).toMatchObject(draft);
   expect(api.formError).toBe('Datos del reporte no válidos');
   expect(api).toMatchObject(draft);
+});
+
+it('keeps edits made while a submit is pending if the request fails', () => {
+  const submitted = draft;
+  const editedDuringWait = {
+    ...draft,
+    description: 'Texto editado mientras se enviaba el reporte.',
+  };
+  const feedback = submitErrorFeedback({ type: 'network-error' });
+  const next = { ...editedDuringWait, ...feedback };
+
+  expect(Object.keys(feedback).sort()).toEqual(['fields', 'formError', 'success']);
+  expect(next.description).toBe(editedDuringWait.description);
+  expect(next.description).not.toBe(submitted.description);
+  expect(next.category).toBe(editedDuringWait.category);
+  expect(next.location).toEqual(editedDuringWait.location);
+  expect(next.formError).toBe(REPORT_FORM_MESSAGES.connectionFailed);
+  expect(next.success).toBeNull();
 });
 
 it('clears the form only after a confirmed send', () => {

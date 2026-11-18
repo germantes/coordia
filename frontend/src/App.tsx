@@ -5,8 +5,10 @@ import Account from './Account.js';
 import {
   nextReportFormState,
   REPORT_FORM_MESSAGES,
+  submitErrorFeedback,
   validateClientReport,
   type ReportFormView,
+  type SubmitErrorFeedback,
 } from './reportForm.js';
 import { Session, SessionExpired } from './session.js';
 
@@ -146,6 +148,12 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
     setSuccess(next.success);
   }
 
+  function applyFailure(feedback: SubmitErrorFeedback) {
+    setFields(feedback.fields);
+    setFormError(feedback.formError);
+    setSuccess(feedback.success);
+  }
+
   function locateMe() {
     if (!navigator.geolocation) {
       setFormError(REPORT_FORM_MESSAGES.geolocationUnsupported);
@@ -194,7 +202,7 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
       });
       const body = await response.json() as ApiError & { id?: string | number; status?: string };
       if (!response.ok) {
-        applyForm(nextReportFormState(values, {
+        applyFailure(submitErrorFeedback({
           type: 'api-error',
           error: body.error ?? REPORT_FORM_MESSAGES.submitFailed,
           fields: body.fields,
@@ -209,7 +217,7 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
       setCreatorObservation(null);
     } catch (error) {
       if (error instanceof SessionExpired) return onExpire();
-      applyForm(nextReportFormState(values, { type: 'network-error' }));
+      applyFailure(submitErrorFeedback({ type: 'network-error' }));
     } finally {
       setBusy(false);
     }

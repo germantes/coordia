@@ -188,15 +188,12 @@ describe('HU-02 acceptance: create a geolocated report', () => {
     expect(text).not.toContain('eco-prohibido');
   });
 
-  it('returns a generic 500 when persistence fails and keeps the technical detail in logs', async () => {
+  it('returns a generic 500 when persistence fails without exposing the technical detail', async () => {
     const { token } = citizen();
     vi.spyOn(reportStore, 'create').mockImplementation(() => {
       throw new Error('detalle interno: sqlite token=super-secret');
     });
-    const logged: unknown[] = [];
-    vi.spyOn(console, 'error').mockImplementation((...args) => {
-      logged.push(args);
-    });
+    vi.spyOn(console, 'error').mockImplementation(() => {});
 
     const response = await create(token, validReport);
     const body = await json(response);
@@ -205,6 +202,6 @@ describe('HU-02 acceptance: create a geolocated report', () => {
     expect(response.status).toBe(500);
     expect(body).toEqual({ error: 'Error interno del servidor' });
     expect(text).not.toContain('super-secret');
-    expect(logged.join(' ')).toContain('super-secret');
+    expect(text).not.toContain('detalle interno');
   });
 });

@@ -46,6 +46,21 @@ export function validateClientReport(values: ReportFormValues, now = Date.now())
   return fields;
 }
 
+export interface SubmitErrorFeedback {
+  fields: Record<string, string>;
+  formError: string;
+  success: null;
+}
+
+export function submitErrorFeedback(
+  outcome: Extract<ReportSubmitOutcome, { type: 'network-error' | 'api-error' }>,
+): SubmitErrorFeedback {
+  if (outcome.type === 'api-error') {
+    return { fields: outcome.fields ?? {}, formError: outcome.error, success: null };
+  }
+  return { fields: {}, formError: REPORT_FORM_MESSAGES.connectionFailed, success: null };
+}
+
 export function nextReportFormState(values: ReportFormValues, outcome: ReportSubmitOutcome): ReportFormView {
   if (outcome.type === 'success') {
     return {
@@ -63,21 +78,7 @@ export function nextReportFormState(values: ReportFormValues, outcome: ReportSub
     return { ...copyValues(values), fields: outcome.fields, formError: '', success: null };
   }
 
-  if (outcome.type === 'api-error') {
-    return {
-      ...copyValues(values),
-      fields: outcome.fields ?? {},
-      formError: outcome.error,
-      success: null,
-    };
-  }
-
-  return {
-    ...copyValues(values),
-    fields: {},
-    formError: REPORT_FORM_MESSAGES.connectionFailed,
-    success: null,
-  };
+  return { ...copyValues(values), ...submitErrorFeedback(outcome) };
 }
 
 function copyValues(values: ReportFormValues): ReportFormValues {
