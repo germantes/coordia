@@ -59,6 +59,8 @@ export class ReportStore {
       CREATE INDEX IF NOT EXISTS verification_by_report ON verification_events(reportId);
     `);
     this.distribution = new ReportDistribution(this.db);
+    // Al abrir el almacenamiento se retoman las distribuciones que quedaron a medias.
+    this.distribution.recoverPendingOrders();
   }
 
   private transaction<T>(work: () => T): T {
@@ -107,29 +109,31 @@ export class ReportStore {
   }
 
   create(data: ReportData, proximity = 0) {
+    // El reporte y su orden de distribución se confirman en la MISMA transacción: si el proceso
+    // se interrumpe después, la orden durable permite retomar la distribución al reiniciar.
     const evaluated = this.transaction(() => {
       const report = { ...data, id: randomUUID() };
       this.db.prepare('INSERT INTO reports VALUES (?,?,?,?)')
         .run(report.id, JSON.stringify(report), this.reputation(report.ownerId), proximity);
-      return this.evaluate(report, 'created');
+      const stored = this.evaluate(report, 'created');
+      if (stored.category && stored.location) {
+        this.distribution.enqueueOrder({
+          reportId: stored.id,
+          category: stored.category,
+          description: stored.description,
+          location: stored.location,
+          occurredAt: stored.occurredAt,
+          createdAt: stored.createdAt,
+          status: stored.status,
+          urgent: stored.urgent,
+        }, {
+          confirm: stored.verification.state === 'verified' || stored.status === 'validated' || stored.status === 'approved',
+        });
+      }
+      return stored;
     });
 
-    if (evaluated.category && evaluated.location) {
-      this.distribution.distributeNewReport({
-        reportId: evaluated.id,
-        category: evaluated.category,
-        description: evaluated.description,
-        location: evaluated.location,
-        occurredAt: evaluated.occurredAt,
-        createdAt: evaluated.createdAt,
-        status: evaluated.status,
-        urgent: evaluated.urgent,
-      });
-      if (evaluated.verification.state === 'verified' || evaluated.status === 'validated' || evaluated.status === 'approved') {
-        this.distribution.confirmUrgentReport(evaluated.id);
-      }
-    }
-
+    this.distribution.recoverPendingOrders();
     return evaluated;
   }
 

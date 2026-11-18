@@ -1,7 +1,8 @@
 import { Router, Request, Response } from 'express';
-import { ReportStore } from '../models/report.js';
+import { ReportStore, type StoredReport } from '../models/report.js';
 import { checkAbility, defineAbilityFor, subject } from '../middleware/ability.js';
 import { Role } from '../constants/roles.js';
+import type { User } from '../types/user.js';
 import { REPORT_CATEGORIES, validateCreateReport } from '../validation/report.js';
 import { proximityFactor, validRule } from '../models/confidence.js';
 import { AgencyCatalog, INCIDENT_ROUTING_RULES, resolveIncidentRouting } from '../models/recipient-matrix.js';
@@ -31,19 +32,24 @@ function requireCitizen(req: Request, res: Response) {
   return user;
 }
 
+// Permite lectura por ámbito de origen (CASL) o al organismo destinatario que recibió el aviso en su bandeja.
+function canReadReport(store: ReportStore, user: User, report: StoredReport): boolean {
+  if (defineAbilityFor(user).can('read', subject('Report', { ...report }) as never)) return true;
+  if (user.role === Role.Guest || !user.organizationId) return false;
+  if (user.role === Role.Dev && report.environment !== 'development') return false;
+  return store.distribution.hasInboxEntry(user.organizationId, report.id);
+}
+
 export function reportsRouter(store: ReportStore) {
   const router = Router();
 
-  /** Consulta del catálogo identificado de organismos receptores y matriz de incidentes (HU-07). */
+  // Catálogo identificado de organismos receptores y matriz de incidentes (HU-07).
   router.get('/catalog/agencies', (req: Request, res: Response) => {
     if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
-    return res.json({
-      agencies: AgencyCatalog.all(),
-      rules: Object.values(INCIDENT_ROUTING_RULES),
-    });
+    return res.json({ agencies: AgencyCatalog.all(), rules: Object.values(INCIDENT_ROUTING_RULES) });
   });
 
-  /** Procesa los envíos en cola horaria diferida o reintentos vencidos (HU-07 · T2). */
+  // Procesa envíos en cola horaria diferida o reintentos vencidos (HU-07 · T2).
   router.post('/queue/process', (req: Request, res: Response) => {
     if (!req.user) return res.status(401).json({ error: 'Autenticación requerida' });
     if (req.user.role !== Role.Admin) {
@@ -56,26 +62,21 @@ export function reportsRouter(store: ReportStore) {
     return res.json({ processedCount: processed.length, deliveries: processed });
   });
 
-  /**
-   * Bandeja de avisos recibidos por el organismo destinatario (CA-2 de HU-07 · T2).
-   * Los miembros de un organismo consultan su propia bandeja (`user.organizationId`);
-   * un administrador puede consultar la bandeja de cualquier organismo.
-   */
+  // Bandeja de avisos recibidos por el organismo destinatario (CA-2 de HU-07 · T2).
   const readInboxHandler = (req: Request, res: Response) => {
     const user = req.user;
     if (!user || user.id === 'guest') return res.status(401).json({ error: 'Autenticación requerida' });
-
+    if (user.role === Role.Guest) {
+      return res.status(403).json({ error: 'Los ciudadanos no tienen acceso a la bandeja de un organismo' });
+    }
     const requestedAgency = typeof req.params.agencyId === 'string' && req.params.agencyId
       ? req.params.agencyId
       : (typeof req.query.agencyId === 'string' && req.query.agencyId ? req.query.agencyId : user.organizationId);
 
-    if (!requestedAgency) {
-      return res.status(403).json({ error: 'El usuario no tiene un organismo asignado' });
-    }
+    if (!requestedAgency) return res.status(403).json({ error: 'El usuario no tiene un organismo asignado' });
     if (user.role !== Role.Admin && user.organizationId !== requestedAgency) {
       return res.status(403).json({ error: 'No tienes permiso para consultar la bandeja de otro organismo' });
     }
-
     const reportId = typeof req.query.reportId === 'string' && req.query.reportId ? req.query.reportId : undefined;
     const unacknowledgedOnly = req.query.unacknowledgedOnly === 'true';
     const entries = store.distribution.inbox(requestedAgency, { reportId, unacknowledgedOnly });
@@ -85,22 +86,20 @@ export function reportsRouter(store: ReportStore) {
   router.get('/inbox', readInboxHandler);
   router.get('/inbox/:agencyId', readInboxHandler);
 
-  /** Acuse de recibo idempotente de un aviso en la bandeja del organismo receptor (CA-2). */
+  // Acuse de recibo idempotente de un aviso en la bandeja del organismo receptor (CA-2).
   router.post('/inbox/:deliveryId/acknowledge', (req: Request, res: Response) => {
     const user = req.user;
     if (!user || user.id === 'guest') return res.status(401).json({ error: 'Autenticación requerida' });
-
+    if (user.role === Role.Guest) {
+      return res.status(403).json({ error: 'Los ciudadanos no tienen acceso a la bandeja de un organismo' });
+    }
     const agencyId = user.role === Role.Admin && typeof req.body?.agencyId === 'string'
       ? req.body.agencyId
       : user.organizationId;
-    if (!agencyId) {
-      return res.status(403).json({ error: 'El usuario no tiene un organismo asignado' });
-    }
+    if (!agencyId) return res.status(403).json({ error: 'El usuario no tiene un organismo asignado' });
 
     const acknowledged = store.distribution.acknowledge(req.params.deliveryId, agencyId, user.id);
-    if (!acknowledged) {
-      return res.status(404).json({ error: 'Aviso no encontrado en la bandeja del organismo' });
-    }
+    if (!acknowledged) return res.status(404).json({ error: 'Aviso no encontrado en la bandeja del organismo' });
     return res.json(acknowledged);
   });
 
@@ -123,43 +122,35 @@ export function reportsRouter(store: ReportStore) {
   router.get('/:id/verification', (req, res) => {
     if (!req.sessionId || !req.user) return res.status(401).json({ error: 'Autenticación requerida' });
     const report = store.findByPk(req.params.id);
-    if (!report || !defineAbilityFor(req.user).can('read', subject('Report', { ...report }) as never)) {
+    if (!report || !canReadReport(store, req.user, report)) {
       return res.status(404).json({ error: 'Reporte no encontrado' });
     }
     res.json({ verification: report.verification, history: store.history(report.id) });
   });
 
-  /** Consulta el estado de enrutamiento y registro de entregas de un reporte (HU-07 · T2). */
+  // Consulta el estado de enrutamiento y registro de entregas de un reporte (HU-07 · T2).
   router.get('/:id/deliveries', (req: Request, res: Response) => {
     const user = req.user;
     if (!user) return res.status(401).json({ error: 'Autenticación requerida' });
     const report = store.findByPk(req.params.id);
     if (!report) return res.status(404).json({ error: 'Reporte no encontrado' });
 
-    const ability = defineAbilityFor(user);
-    if (!ability.can('read', subject('Report', { ...report }) as never)) {
+    if (!canReadReport(store, user, report)) {
       return res.status(403).json({ error: 'Permiso denegado para consultar entregas de este reporte' });
     }
-
-    const summary = store.distribution.getSummary(req.params.id);
-    if (!summary) {
-      return res.json({ reportId: req.params.id, deliveries: [] });
-    }
-    return res.json(summary);
+    return res.json(store.distribution.getSummary(req.params.id) ?? { reportId: req.params.id, deliveries: [] });
   });
 
-  /** Reintenta entregas fallidas/pendientes de reintento asociadas a un reporte (HU-07 · T2). */
+  // Reintenta entregas con fallo recuperable asociadas a un reporte (HU-07 · T2).
   router.post('/:id/deliveries/retry', (req: Request, res: Response) => {
     const user = req.user;
     if (!user) return res.status(401).json({ error: 'Autenticación requerida' });
     const report = store.findByPk(req.params.id);
     if (!report) return res.status(404).json({ error: 'Reporte no encontrado' });
 
-    const ability = defineAbilityFor(user);
-    if (!ability.can('update', subject('Report', { ...report }) as never)) {
+    if (!defineAbilityFor(user).can('update', subject('Report', { ...report }) as never)) {
       return res.status(403).json({ error: 'No tiene permiso para reintentar entregas en este ámbito' });
     }
-
     const retried = store.distribution.retryPendingDeliveries({ reportId: req.params.id });
     return res.json({
       reportId: req.params.id,
@@ -168,7 +159,7 @@ export function reportsRouter(store: ReportStore) {
     });
   });
 
-  /** List nearby pending reports without exposing reporter identity or exact coordinates. */
+  // Lista reportes pendientes cercanos sin exponer autor ni coordenadas exactas.
   router.post('/nearby', (req: Request, res: Response) => {
     const user = requireCitizen(req, res);
     if (!user) return;
@@ -201,7 +192,7 @@ export function reportsRouter(store: ReportStore) {
     return res.json({ radiusMeters: MAX_RESPONSE_DISTANCE_METERS, reports: visibleReports });
   });
 
-  /** CREATE */
+  // Creación de reporte.
   router.post('/', (req: Request, res: Response) => {
     const validation = validateCreateReport(req.body);
     if (!validation.valid) {
@@ -235,7 +226,7 @@ export function reportsRouter(store: ReportStore) {
     res.status(201).json(report);
   });
 
-  /** Record or change a citizen's single response to a pending report. */
+  // Registra o actualiza la respuesta de un ciudadano a un reporte pendiente.
   router.put('/:id/response', (req: Request, res: Response) => {
     const user = requireCitizen(req, res);
     if (!user) return;
@@ -282,7 +273,7 @@ export function reportsRouter(store: ReportStore) {
     return res.json({ reportId: report.id, response: validation.data.response, ...result });
   });
 
-  /** READ REPORTS WITH THE CALLER'S ACTUAL ROLE AND RESOURCE SCOPE */
+  // Consulta de reportes según el rol y ámbito del usuario.
   router.get('/', (req: Request, res: Response) => {
     const user = req.user;
     if (!user) return res.status(401).json({ error: 'Autenticación requerida' });
@@ -299,18 +290,14 @@ export function reportsRouter(store: ReportStore) {
     if (!ability.can('read', subject('Report', probe) as never)) {
       return res.status(403).json({ error: 'Permiso denegado para consultar reportes' });
     }
-    const where = user.role === Role.Admin
-      ? undefined
-      : {
-          organizationId: user.organizationId,
-          ...(user.role === Role.Guest ? { ownerId: user.id } : {}),
-          ...(user.role === Role.Dev ? { environment: 'development' as const } : {}),
-        };
-    const reports = store.findAll(where);
-    res.json(reports);
+    if (user.role === Role.Admin) return res.json(store.findAll());
+    if (user.role === Role.Guest) {
+      return res.json(store.findAll({ organizationId: user.organizationId, ownerId: user.id }));
+    }
+    res.json(store.findAll().filter((report) => canReadReport(store, user, report)));
   });
 
-  /** READ THE CALLER'S REPORTS */
+  // Consulta de los reportes propios del usuario.
   router.get('/mi', (req: Request, res: Response) => {
     const user = req.user;
     if (!user) return res.status(401).json({ error: 'Autenticación requerida' });
@@ -326,11 +313,21 @@ export function reportsRouter(store: ReportStore) {
     if (!ability.can('read', subject('Report', where) as never)) {
       return res.status(403).json({ error: 'Permiso denegado para consultar reportes propios' });
     }
-    const reports = store.findAll(where);
-    res.json(reports);
+    res.json(store.findAll(where));
   });
 
-  /** UPDATE */
+  // Detalle de un incidente para el organismo de origen o el organismo que recibió el aviso en bandeja.
+  router.get('/:id', (req: Request, res: Response) => {
+    const user = req.user;
+    if (!user || !req.sessionId) return res.status(401).json({ error: 'Autenticación requerida' });
+    const report = store.findByPk(req.params.id);
+    if (!report || !canReadReport(store, user, report)) {
+      return res.status(404).json({ error: 'Reporte no encontrado' });
+    }
+    return res.json(report);
+  });
+
+  // Actualización de reporte.
   router.patch('/:id', (req: Request, res: Response) => {
     const { id } = req.params;
     const report = store.findByPk(id);
@@ -373,19 +370,13 @@ export function reportsRouter(store: ReportStore) {
 
     if (req.body.status === 'validated' || req.body.status === 'approved') {
       if (AgencyCatalog.isInstitutionalVerifier(user.organizationId)) {
-        store.distribution.recordVerificationSignal({
-          reportId: id,
-          institutionalConfirmations: 1,
-        });
+        store.distribution.recordVerificationSignal({ reportId: id, institutionalConfirmations: 1 });
       } else {
         store.distribution.confirmUrgentReport(id);
       }
     } else if (req.body.status === 'rejected') {
       if (AgencyCatalog.isInstitutionalVerifier(user.organizationId)) {
-        store.distribution.recordVerificationSignal({
-          reportId: id,
-          institutionalRejections: 1,
-        });
+        store.distribution.recordVerificationSignal({ reportId: id, institutionalRejections: 1 });
       } else {
         store.distribution.refuteUrgentReport(id);
       }
@@ -394,7 +385,7 @@ export function reportsRouter(store: ReportStore) {
     res.json(updated);
   });
 
-  /** DELETE */
+  // Eliminación de reporte.
   router.delete('/:id', checkAbility('delete', 'Report'), (req: Request, res: Response) => {
     const rows = store.destroy(req.params.id);
     if (!rows) return res.status(404).json({ error: 'No encontrado' });
