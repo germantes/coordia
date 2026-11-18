@@ -2,6 +2,12 @@ import React, { type FormEvent, useState } from 'react';
 import LocationPicker, { type Coordinates } from './LocationPicker.js';
 
 import Account from './Account.js';
+import {
+  nextReportFormState,
+  REPORT_FORM_MESSAGES,
+  validateClientReport,
+  type ReportFormView,
+} from './reportForm.js';
 import { Session, SessionExpired } from './session.js';
 
 const categories = [
@@ -130,9 +136,19 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
     }
   }
 
+  function applyForm(next: ReportFormView) {
+    setCategory(next.category);
+    setDescription(next.description);
+    setOccurredAt(next.occurredAt);
+    setLocation(next.location);
+    setFields(next.fields);
+    setFormError(next.formError);
+    setSuccess(next.success);
+  }
+
   function locateMe() {
     if (!navigator.geolocation) {
-      setFormError('Este navegador no permite obtener la ubicación. Selecciona el punto directamente en el mapa.');
+      setFormError(REPORT_FORM_MESSAGES.geolocationUnsupported);
       return;
     }
     setLocating(true);
@@ -145,7 +161,7 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
         setLocating(false);
       },
       () => {
-        setFormError('No se pudo obtener tu ubicación. Comprueba los permisos o selecciona el punto en el mapa.');
+        setFormError(REPORT_FORM_MESSAGES.geolocationFailed);
         setLocating(false);
       },
       { enableHighAccuracy: true, timeout: 10_000 },
@@ -154,21 +170,10 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setFields({});
-    setFormError('');
-    setSuccess(null);
-
-    const clientErrors: Record<string, string> = {};
-    if (!category) clientErrors.category = 'Selecciona una categoría.';
-    if (description.trim().length < 10 || description.trim().length > 2_000) {
-      clientErrors.description = 'Escribe entre 10 y 2.000 caracteres.';
-    }
-    if (!location) clientErrors.location = 'Selecciona la ubicación en el mapa.';
-    if (occurredAt && new Date(occurredAt).getTime() > Date.now()) {
-      clientErrors.occurredAt = 'La fecha del incidente no puede estar en el futuro.';
-    }
+    const values = { category, description, occurredAt, location };
+    const clientErrors = validateClientReport(values);
     if (Object.keys(clientErrors).length) {
-      setFields(clientErrors);
+      applyForm(nextReportFormState(values, { type: 'client-invalid', fields: clientErrors }));
       return;
     }
 
@@ -189,19 +194,22 @@ function Reports({ session, onExpire }: { session: Session; onExpire: () => void
       });
       const body = await response.json() as ApiError & { id?: string | number; status?: string };
       if (!response.ok) {
-        if (body.fields) setFields(body.fields);
-        setFormError(body.error ?? 'No se pudo enviar el reporte. Inténtalo de nuevo.');
+        applyForm(nextReportFormState(values, {
+          type: 'api-error',
+          error: body.error ?? REPORT_FORM_MESSAGES.submitFailed,
+          fields: body.fields,
+        }));
         return;
       }
-      setSuccess({ id: body.id ?? '—', status: body.status ?? 'pending' });
-      setCategory('');
-      setDescription('');
-      setOccurredAt('');
-      setLocation(null);
+      applyForm(nextReportFormState(values, {
+        type: 'success',
+        id: body.id ?? '—',
+        status: body.status ?? 'pending',
+      }));
       setCreatorObservation(null);
     } catch (error) {
       if (error instanceof SessionExpired) return onExpire();
-      setFormError('No se pudo conectar con el servidor. Revisa la conexión e inténtalo de nuevo.');
+      applyForm(nextReportFormState(values, { type: 'network-error' }));
     } finally {
       setBusy(false);
     }
