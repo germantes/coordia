@@ -16,7 +16,7 @@
     "status": "completados",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-17T18:00:21Z",
+    "updated_at_utc": "2026-11-18T18:01:16Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -200,16 +200,16 @@
       "cut": "d8",
       "label": "cierre",
       "ideal_h": 31.6,
-      "real_h": null,
-      "deviation_h": null,
-      "deviation_pct": null,
-      "hu_accepted": null,
-      "hours_accepted_h": null,
-      "blocked_tasks": null,
-      "block_days": null,
-      "critical_defects": null,
-      "logged_hours": null,
-      "notes": "Pendiente del cierre diario (CTRL-2); null ≠ 0."
+      "real_h": 43.5,
+      "deviation_h": 11.9,
+      "deviation_pct": 7.5,
+      "hu_accepted": 0,
+      "hours_accepted_h": 0.0,
+      "blocked_tasks": 0,
+      "block_days": 2,
+      "critical_defects": 0,
+      "logged_hours": 29.23,
+      "notes": "Cierre 18/11 19:01 Europe/Madrid. KPI-2 = 7,5 % (verde). Restante 43,5 h. Completadas hoy HU-02 · T2, HU-04 · T2, HU-11 · T2, HU-07 · T2, HU-02 · T3 y CTRL-4. Siguen abiertas HU-05 · T2 (12 h, en revisión), las T3 de HU-05, HU-07 y HU-11 (7 h cada una, sin empezar y con vencimiento el 19/11) y CTRL-2, CTRL-3, CTRL-5, CTRL-6 y CTRL-7 (10,5 h; CTRL-5 devuelta a en curso por el revisor). 0 bloqueos, 0 críticos, 0 HU aceptadas."
     },
     {
       "date": "2026-11-19",
@@ -1125,7 +1125,7 @@
   ],
   "invariants": {
     "daily_rows": 11,
-    "daily_filled_rows": 8,
+    "daily_filled_rows": 9,
     "audit_rows": 25,
     "hu_subtasks": 18,
     "ctrl_tasks": 7,
@@ -1141,12 +1141,19 @@
     "baseline_B0_h": 158.0,
     "N0": 6,
     "people": 9,
-    "open_remaining_h": 88.5,
-    "logged_hours": 8.98,
+    "open_remaining_h": 43.5,
+    "logged_hours": 29.23,
     "blocked_tasks": 0,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "1.9",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-18",
+      "change": "Cierre d8: restante real 43,5 h, ideal 31,6 h, desviación 11,9 h (7,5 %, verde). HU-02 · T2, HU-04 · T2, HU-11 · T2, HU-07 · T2, HU-02 · T3 y CTRL-4 completadas. 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 29,23.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "1.8",
       "baseline": "LB-S2-v1",
