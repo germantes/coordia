@@ -3,6 +3,7 @@ import { openDatabase, type Database } from '../database.js';
 import type { ReportCategory } from '../validation/report.js';
 import type { ReportResponseValue } from '../validation/report-response.js';
 import { defaultRule, evaluateConfidence, type ConfidenceRule, type Contribution } from './confidence.js';
+import { ReportDistribution } from './report-distribution.js';
 
 export interface ReportData {
   id?: string | number;
@@ -13,18 +14,25 @@ export interface ReportData {
   status?: string;
   category?: ReportCategory;
   description?: string;
-  location?: { latitude: number; longitude: number };
+  location?: {
+    latitude: number;
+    longitude: number;
+    accuracyMeters?: number;
+    source?: 'gps' | 'manual';
+  };
+  urgent?: boolean;
   occurredAt?: string;
   createdAt?: string;
 }
 
 type Evaluation = ReturnType<typeof evaluateConfidence>;
 type Verification = Evaluation & { changedAt: string; threshold: number };
-type StoredReport = ReportData & { id: string; verification: Verification };
+export type StoredReport = ReportData & { id: string; verification: Verification };
 type Evidence = Contribution & { userId: string };
 
 export class ReportStore {
   private readonly db: Database;
+  readonly distribution: ReportDistribution;
 
   constructor(path: string) {
     this.db = openDatabase(path);
@@ -50,6 +58,9 @@ export class ReportStore {
       );
       CREATE INDEX IF NOT EXISTS verification_by_report ON verification_events(reportId);
     `);
+    this.distribution = new ReportDistribution(this.db);
+    // Al abrir el almacenamiento se retoman las distribuciones que quedaron a medias.
+    this.distribution.recoverPendingOrders();
   }
 
   private transaction<T>(work: () => T): T {
@@ -70,10 +81,21 @@ export class ReportStore {
   }
 
   setRule(category: ReportCategory, rule: ConfidenceRule) {
+    const newlyVerified: string[] = [];
     this.transaction(() => {
       this.db.prepare('INSERT OR REPLACE INTO confidence_rules VALUES (?,?)').run(category, JSON.stringify(rule));
-      for (const report of this.findAll({ category })) this.evaluate(report, 'rule');
+      for (const report of this.findAll({ category })) {
+        const evaluated = this.evaluate(report, 'rule');
+        if (evaluated.verification.state === 'verified') {
+          newlyVerified.push(evaluated.id);
+        }
+      }
     });
+    // La distribución comparte esta conexión SQLite: se inicia después del
+    // commit para no intentar abrir una transacción dentro de otra.
+    for (const id of newlyVerified) {
+      this.distribution.confirmUrgentReport(id);
+    }
   }
 
   private reputation(ownerId: string | undefined) {
@@ -87,12 +109,32 @@ export class ReportStore {
   }
 
   create(data: ReportData, proximity = 0) {
-    return this.transaction(() => {
+    // El reporte y su orden de distribución se confirman en la MISMA transacción: si el proceso
+    // se interrumpe después, la orden durable permite retomar la distribución al reiniciar.
+    const evaluated = this.transaction(() => {
       const report = { ...data, id: randomUUID() };
       this.db.prepare('INSERT INTO reports VALUES (?,?,?,?)')
         .run(report.id, JSON.stringify(report), this.reputation(report.ownerId), proximity);
-      return this.evaluate(report, 'created');
+      const stored = this.evaluate(report, 'created');
+      if (stored.category && stored.location) {
+        this.distribution.enqueueOrder({
+          reportId: stored.id,
+          category: stored.category,
+          description: stored.description,
+          location: stored.location,
+          occurredAt: stored.occurredAt,
+          createdAt: stored.createdAt,
+          status: stored.status,
+          urgent: stored.urgent,
+        }, {
+          confirm: stored.verification.state === 'verified' || stored.status === 'validated' || stored.status === 'approved',
+        });
+      }
+      return stored;
     });
+
+    this.distribution.recoverPendingOrders();
+    return evaluated;
   }
 
   findByPk(id: string): StoredReport | null {
@@ -108,7 +150,7 @@ export class ReportStore {
 
   update(expected: StoredReport, data: ReportData) {
     const id = expected.id;
-    return this.transaction(() => {
+    const updated = this.transaction(() => {
       const current = this.findByPk(id);
       if (!current || JSON.stringify(current) !== JSON.stringify(expected)) return null;
       const moved = data.location && (data.location.latitude !== current.location?.latitude
@@ -122,6 +164,16 @@ export class ReportStore {
       }
       return this.evaluate({ ...current, ...data, id }, 'updated');
     });
+
+    if (updated) {
+      if (data.status === 'validated' || data.status === 'approved') {
+        this.distribution.confirmUrgentReport(id);
+      } else if (data.status === 'rejected') {
+        this.distribution.refuteUrgentReport(id);
+      }
+    }
+
+    return updated;
   }
 
   destroy(id: string) {
@@ -144,7 +196,7 @@ export class ReportStore {
 
   respond(expected: StoredReport, userId: string, response: ReportResponseValue) {
     const id = expected.id;
-    return this.transaction(() => {
+    const outcome = this.transaction(() => {
       const report = this.findByPk(id);
       if (!report || report.status !== 'pending' || report.ownerId !== expected.ownerId
         || report.organizationId !== expected.organizationId || report.location?.latitude !== expected.location?.latitude
@@ -161,6 +213,19 @@ export class ReportStore {
       const { verification } = this.evaluate(report, 'response');
       return { changed: true, updatedAt, counts: this.responses(id, userId).counts, verification };
     });
+
+    if (outcome?.changed) {
+      this.distribution.recordVerificationSignal({
+        reportId: id,
+        citizenConfirmations: outcome.counts.confirm,
+        citizenRejections: outcome.counts.question,
+      });
+      if (outcome.verification.state === 'verified') {
+        this.distribution.confirmUrgentReport(id);
+      }
+    }
+
+    return outcome;
   }
 
   private evaluate(report: ReportData & { id: string; verification?: Verification }, reason: string): StoredReport {
@@ -185,5 +250,8 @@ export class ReportStore {
       .map(row => JSON.parse(String(row.event)));
   }
 
-  close() { this.db.close(); }
+  close() {
+    this.distribution.close();
+    this.db.close();
+  }
 }

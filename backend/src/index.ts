@@ -10,10 +10,13 @@ import { AuthStore } from './auth/store.js';
 import { authRouter } from './routes/auth.js';
 import { jwtSecret } from './middleware/auth.js';
 
-/** Crea y configura la aplicación Express. */
+// Crea y configura la aplicación Express.
 export function createServer(store = new AuthStore(process.env.AUTH_DB_PATH ?? '.data/auth.sqlite'),
   reports = new ReportStore(process.env.REPORT_DB_PATH ?? '.data/reports.sqlite')): Application {
   jwtSecret();
+  reports.distribution.startScheduler({
+    ...(process.env.DISTRIBUTION_INTERVAL_MS ? { intervalMs: Number(process.env.DISTRIBUTION_INTERVAL_MS) } : {}),
+  });
   const app = express();
 
   app.use(cors({ origin: process.env.FRONTEND_ORIGIN ?? 'http://localhost:5173', credentials: true }));

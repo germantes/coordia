@@ -16,7 +16,10 @@ export interface CreateReportInput {
   location: {
     latitude: number;
     longitude: number;
+    accuracyMeters?: number;
+    source?: 'gps' | 'manual';
   };
+  urgent?: boolean;
   occurredAt?: string;
 }
 
@@ -24,8 +27,8 @@ export type CreateReportValidation =
   | { valid: true; data: CreateReportInput; creatorProximityMeters?: number }
   | { valid: false; errors: Record<string, string> };
 
-const allowedFields = new Set(['category', 'description', 'location', 'occurredAt', 'creatorObservation']);
-const allowedLocationFields = new Set(['latitude', 'longitude']);
+const allowedFields = new Set(['category', 'description', 'location', 'occurredAt', 'creatorObservation', 'urgent']);
+const allowedLocationFields = new Set(['latitude', 'longitude', 'accuracyMeters', 'source']);
 const isoDateTimePattern = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -72,16 +75,36 @@ export function validateCreateReport(
       if (!allowedLocationFields.has(field)) errors[`location.${field}`] = 'Campo no permitido';
     }
 
-    const { latitude, longitude } = input.location;
+    const { latitude, longitude, accuracyMeters, source } = input.location;
     if (typeof latitude !== 'number' || !Number.isFinite(latitude) || latitude < -90 || latitude > 90) {
       errors['location.latitude'] = 'La latitud debe ser un número entre -90 y 90';
     }
     if (typeof longitude !== 'number' || !Number.isFinite(longitude) || longitude < -180 || longitude > 180) {
       errors['location.longitude'] = 'La longitud debe ser un número entre -180 y 180';
     }
+    if (accuracyMeters !== undefined && (typeof accuracyMeters !== 'number' || !Number.isFinite(accuracyMeters) || accuracyMeters <= 0)) {
+      errors['location.accuracyMeters'] = 'La precisión debe ser un número positivo';
+    }
+    if (source !== undefined && source !== 'gps' && source !== 'manual') {
+      errors['location.source'] = 'El origen de ubicación debe ser gps o manual';
+    }
     if (typeof latitude === 'number' && Number.isFinite(latitude) && latitude >= -90 && latitude <= 90
       && typeof longitude === 'number' && Number.isFinite(longitude) && longitude >= -180 && longitude <= 180) {
-      location = { latitude, longitude };
+      location = {
+        latitude,
+        longitude,
+        ...(typeof accuracyMeters === 'number' && Number.isFinite(accuracyMeters) && accuracyMeters > 0 ? { accuracyMeters } : {}),
+        ...(source === 'gps' || source === 'manual' ? { source } : {}),
+      };
+    }
+  }
+
+  let urgent: boolean | undefined;
+  if (input.urgent !== undefined) {
+    if (typeof input.urgent !== 'boolean') {
+      errors.urgent = 'El indicador de urgencia debe ser booleano';
+    } else {
+      urgent = input.urgent;
     }
   }
 
@@ -117,6 +140,7 @@ export function validateCreateReport(
       category,
       description,
       location,
+      ...(urgent !== undefined ? { urgent } : {}),
       ...(occurredAt ? { occurredAt } : {}),
     },
   };
