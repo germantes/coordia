@@ -16,7 +16,7 @@
     "status": "completados",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-18T18:01:16Z",
+    "updated_at_utc": "2026-11-19T18:00:43Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -216,16 +216,16 @@
       "cut": "d9",
       "label": "cierre",
       "ideal_h": 15.8,
-      "real_h": null,
-      "deviation_h": null,
-      "deviation_pct": null,
-      "hu_accepted": null,
-      "hours_accepted_h": null,
-      "blocked_tasks": null,
-      "block_days": null,
-      "critical_defects": null,
-      "logged_hours": null,
-      "notes": "Pendiente del cierre diario (CTRL-2); null ≠ 0."
+      "real_h": 36.5,
+      "deviation_h": 20.7,
+      "deviation_pct": 13.1,
+      "hu_accepted": 0,
+      "hours_accepted_h": 0.0,
+      "blocked_tasks": 0,
+      "block_days": 2,
+      "critical_defects": 0,
+      "logged_hours": 29.61,
+      "notes": "Cierre 19/11 19:00 Europe/Madrid. KPI-2 = 13,1 % (ámbar). Restante 36,5 h: HU-05 · T2 (12 h, en revisión), la T3 de HU-05 (7 h, Zehra) y la de HU-11 (7 h, Daniil), que vencían hoy y siguen en sprint backlog, más CTRL-2, CTRL-3, CTRL-5, CTRL-6 y CTRL-7 (10,5 h). Sin tareas completadas durante el día. H3 no se cumple: 4 de 6 T3. 0 bloqueos, 0 críticos, 0 HU aceptadas."
     },
     {
       "date": "2026-11-20",
@@ -1125,7 +1125,7 @@
   ],
   "invariants": {
     "daily_rows": 11,
-    "daily_filled_rows": 9,
+    "daily_filled_rows": 10,
     "audit_rows": 25,
     "hu_subtasks": 18,
     "ctrl_tasks": 7,
@@ -1141,12 +1141,19 @@
     "baseline_B0_h": 158.0,
     "N0": 6,
     "people": 9,
-    "open_remaining_h": 43.5,
-    "logged_hours": 29.23,
+    "open_remaining_h": 36.5,
+    "logged_hours": 29.61,
     "blocked_tasks": 0,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "2.0",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-19",
+      "change": "Cierre d9: restante real 36,5 h, ideal 15,8 h, desviación 20,7 h (13,1 %, ámbar). Sin tareas completadas durante el día. HU-05 · T2 sigue en revisión; las T3 de HU-05 y HU-11 no se terminaron el día de su vencimiento y H3 no se cumple (4 de 6 T3). 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 29,61.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "1.9",
       "baseline": "LB-S2-v1",
