@@ -1,6 +1,6 @@
 # CTRL-1 · Registro de control — Sprint 2
 
-> **Fuente canónica: el repositorio** (`docs/control/registro-sprint-2.json`). Versión `LB-S2-v1` · registro `2.0` · actualizado `2026-11-19T18:00:43Z` · tarea CTRL-1 `completados`.  
+> **Fuente canónica: el repositorio** (`docs/control/registro-sprint-2.json`). Versión `LB-S2-v1` · registro `2.1` · actualizado `2026-11-20T18:00:39Z` · tarea CTRL-1 `completados`.  
 > Si eres un agente: lee el contrato (§0) y el JSON. El Doc de ClickUp `2kxv5w3j-132` está congelado desde `2026-11-10T13:22:14Z`; no lo escribas.
 
 ## 0\. Contrato para agentes y MCP
@@ -101,7 +101,7 @@ Cortes d1–d10 al cierre de cada día laborable (09–20/11). El 23/11 es front
 | 2026-11-17 | d7 | cierre | 47.4 | 88.5 | 41.1 | 26.0 | 0 | 0.0 | 0 | 2 | 0 | 8.98 | Cierre 17/11 19:00 Europe/Madrid. KPI-2 = 26,0 % (rojo). HU-02 · T2 y HU-01 · T3 completadas. H2: 4 T2 en revisión. CTRL-5 sigue abierta. 0 bloqueos, 0 críticos, 0 HU aceptadas. |
 | 2026-11-18 | d8 | cierre | 31.6 | 43.5 | 11.9 | 7.5 | 0 | 0.0 | 0 | 2 | 0 | 29.23 | Cierre 18/11 19:01 Europe/Madrid. KPI-2 = 7,5 % (verde). Restante 43,5 h. Completadas hoy HU-02 · T2, HU-04 · T2, HU-11 · T2, HU-07 · T2, HU-02 · T3 y CTRL-4. Siguen abiertas HU-05 · T2 (12 h, en revisión), las T3 de HU-05, HU-07 y HU-11 (7 h cada una, sin empezar y con vencimiento el 19/11) y CTRL-2, CTRL-3, CTRL-5, CTRL-6 y CTRL-7 (10,5 h; CTRL-5 devuelta a en curso por el revisor). 0 bloqueos, 0 críticos, 0 HU aceptadas. |
 | 2026-11-19 | d9 | cierre | 15.8 | 36.5 | 20.7 | 13.1 | 0 | 0.0 | 0 | 2 | 0 | 29.61 | Cierre 19/11 19:00 Europe/Madrid. KPI-2 = 13,1 % (ámbar). Restante 36,5 h: HU-05 · T2 (12 h, en revisión), la T3 de HU-05 (7 h, Zehra) y la de HU-11 (7 h, Daniil), que vencían hoy y siguen en sprint backlog, más CTRL-2, CTRL-3, CTRL-5, CTRL-6 y CTRL-7 (10,5 h). Sin tareas completadas durante el día. H3 no se cumple: 4 de 6 T3. 0 bloqueos, 0 críticos, 0 HU aceptadas. |
-| 2026-11-20 | d10 | cierre | 0.0 | — | — | — | — | — | — | — | — | — | Pendiente del cierre diario (CTRL-2); null ≠ 0. |
+| 2026-11-20 | d10 | cierre | 0.0 | 36.5 | 36.5 | 23.1 | 0 | 0.0 | 0 | 2 | 0 | 37.61 | Cierre 20/11 19:00 Europe/Madrid, último día laborable. KPI-2 = 23,1 % (rojo). Restante 36,5 h y ninguna tarea completada durante el día. Siguen abiertas HU-05 · T2 (12 h, en revisión), la T3 de HU-11 (7 h, sprint backlog, sin empezar), la T3 de HU-05 (7 h, en curso desde hoy) y CTRL-2, CTRL-3, CTRL-5, CTRL-6 y CTRL-7 (10,5 h). 0 bloqueos, 0 críticos, 0 HU aceptadas. El 23/11 es la Review. |
 
 ## 3\. Indicadores
 
@@ -201,7 +201,7 @@ Leída de ClickUp el 2026-11-17T18:00:21Z. 18 subtareas HU + 7 tareas CTRL. Las 
 ```json
 {
   "daily_rows": 11,
-  "daily_filled_rows": 10,
+  "daily_filled_rows": 11,
   "audit_rows": 25,
   "hu_subtasks": 18,
   "ctrl_tasks": 7,
@@ -218,7 +218,7 @@ Leída de ClickUp el 2026-11-17T18:00:21Z. 18 subtareas HU + 7 tareas CTRL. Las 
   "N0": 6,
   "people": 9,
   "open_remaining_h": 36.5,
-  "logged_hours": 29.61,
+  "logged_hours": 37.61,
   "blocked_tasks": 0,
   "critical_defects": 0
 }
@@ -245,7 +245,7 @@ Leída de ClickUp el 2026-11-17T18:00:21Z. 18 subtareas HU + 7 tareas CTRL. Las 
     "status": "completados",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-19T18:00:43Z",
+    "updated_at_utc": "2026-11-20T18:00:39Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -461,16 +461,16 @@ Leída de ClickUp el 2026-11-17T18:00:21Z. 18 subtareas HU + 7 tareas CTRL. Las 
       "cut": "d10",
       "label": "cierre",
       "ideal_h": 0.0,
-      "real_h": null,
-      "deviation_h": null,
-      "deviation_pct": null,
-      "hu_accepted": null,
-      "hours_accepted_h": null,
-      "blocked_tasks": null,
-      "block_days": null,
-      "critical_defects": null,
-      "logged_hours": null,
-      "notes": "Pendiente del cierre diario (CTRL-2); null ≠ 0."
+      "real_h": 36.5,
+      "deviation_h": 36.5,
+      "deviation_pct": 23.1,
+      "hu_accepted": 0,
+      "hours_accepted_h": 0.0,
+      "blocked_tasks": 0,
+      "block_days": 2,
+      "critical_defects": 0,
+      "logged_hours": 37.61,
+      "notes": "Cierre 20/11 19:00 Europe/Madrid, último día laborable. KPI-2 = 23,1 % (rojo). Restante 36,5 h y ninguna tarea completada durante el día. Siguen abiertas HU-05 · T2 (12 h, en revisión), la T3 de HU-11 (7 h, sprint backlog, sin empezar), la T3 de HU-05 (7 h, en curso desde hoy) y CTRL-2, CTRL-3, CTRL-5, CTRL-6 y CTRL-7 (10,5 h). 0 bloqueos, 0 críticos, 0 HU aceptadas. El 23/11 es la Review."
     }
   ],
   "indicators": [
@@ -1354,7 +1354,7 @@ Leída de ClickUp el 2026-11-17T18:00:21Z. 18 subtareas HU + 7 tareas CTRL. Las 
   ],
   "invariants": {
     "daily_rows": 11,
-    "daily_filled_rows": 10,
+    "daily_filled_rows": 11,
     "audit_rows": 25,
     "hu_subtasks": 18,
     "ctrl_tasks": 7,
@@ -1371,11 +1371,18 @@ Leída de ClickUp el 2026-11-17T18:00:21Z. 18 subtareas HU + 7 tareas CTRL. Las 
     "N0": 6,
     "people": 9,
     "open_remaining_h": 36.5,
-    "logged_hours": 29.61,
+    "logged_hours": 37.61,
     "blocked_tasks": 0,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "2.1",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-20",
+      "change": "Cierre d10, último día laborable: restante real 36,5 h, ideal 0,0 h, desviación 36,5 h (23,1 %, rojo). Ninguna tarea completada durante el día. HU-05 · T2 en revisión; T3 de HU-11 sin empezar y T3 de HU-05 en curso. 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 37,61.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "2.0",
       "baseline": "LB-S2-v1",
@@ -1461,6 +1468,7 @@ Leída de ClickUp el 2026-11-17T18:00:21Z. 18 subtareas HU + 7 tareas CTRL. Las 
 
 | Versión | Línea base | Fecha | Cambio | Autor |
 | ---| ---| ---| ---| --- |
+| 2.1 | LB-S2-v1 | 2026-11-20 | Cierre d10, último día laborable: restante real 36,5 h, ideal 0,0 h, desviación 36,5 h (23,1 %, rojo). Ninguna tarea completada durante el día. HU-05 · T2 en revisión; T3 de HU-11 sin empezar y T3 de HU-05 en curso. 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 37,61. | Alejandro Cerezo Contreras |
 | 2.0 | LB-S2-v1 | 2026-11-19 | Cierre d9: restante real 36,5 h, ideal 15,8 h, desviación 20,7 h (13,1 %, ámbar). Sin tareas completadas durante el día. HU-05 · T2 sigue en revisión; las T3 de HU-05 y HU-11 no se terminaron el día de su vencimiento y H3 no se cumple (4 de 6 T3). 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 29,61. | Alejandro Cerezo Contreras |
 | 1.9 | LB-S2-v1 | 2026-11-18 | Cierre d8: restante real 43,5 h, ideal 31,6 h, desviación 11,9 h (7,5 %, verde). HU-02 · T2, HU-04 · T2, HU-11 · T2, HU-07 · T2, HU-02 · T3 y CTRL-4 completadas. 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 29,23. | Alejandro Cerezo Contreras |
 | 1.8 | LB-S2-v1 | 2026-11-17 | Cierre d7: restante real 88,5 h, ideal 47,4 h, desviación 41,1 h (26,0 %, rojo). HU-02 · T2 y HU-01 · T3 completadas. H2 con 4 T2 en revisión. 0 HU aceptadas, 0 bloqueos, 0 críticos. Horas registradas 8,98. | Alejandro Cerezo Contreras |
