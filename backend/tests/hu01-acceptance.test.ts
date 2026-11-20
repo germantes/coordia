@@ -4,6 +4,7 @@ import type { AddressInfo } from 'node:net';
 import { AuthStore } from '../src/auth/store.js';
 import { hashPassword } from '../src/auth/password.js';
 import { createServer } from '../src/index.js';
+import { ReportStore } from '../src/models/report.js';
 import { Role } from '../src/constants/roles.js';
 import type { User } from '../src/types/user.js';
 
@@ -13,20 +14,25 @@ import type { User } from '../src/types/user.js';
 // genérico que no debe confundirse con la respuesta de credenciales.
 
 let store: AuthStore;
+let reportStore: ReportStore;
 let server: Server;
 let base: string;
 
 const password = '  frase secreta larga  ';
 
 beforeEach(async () => {
+  // El segundo argumento evita el ReportStore de fichero .data/reports.sqlite,
+  // compartido con otros tests y origen del "database is locked".
   store = new AuthStore(':memory:');
-  server = createServer(store).listen(0, '127.0.0.1');
+  reportStore = new ReportStore(':memory:');
+  server = createServer(store, reportStore).listen(0, '127.0.0.1');
   await new Promise<void>((resolve) => server.once('listening', resolve));
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
 });
 
 afterEach(async () => {
   await new Promise<void>((resolve) => server.close(() => resolve()));
+  reportStore.close();
   store.close();
 });
 
