@@ -51,7 +51,6 @@ Abrir el código de COORDIA para que ayuntamientos, asociaciones y equipos de te
 | Riesgo | Acción |
 | --- | --- |
 | Que se publique algún dato personal, credencial o documento interno en los archivos o en el historial del repositorio. | Revisar el contenido y el historial antes de publicar (prioridad 1) y, si hace falta, publicar desde una copia limpia del repositorio. |
-| Que alguien use la demostración pensando que guarda los reportes, cuando ahora se pierden al reiniciar el servidor. | Indicarlo claramente en el README y en la
-
-
-
+| Que alguien use la demostración pensando que guarda los reportes, cuando ahora se pierden al reiniciar el servidor. | Indicarlo claramente en el README y en lapropia demostración hasta completar la persistencia de reportes y respuestas. |
+| Que la guía de instalación no coincida con lo que necesita el código (PostgreSQL y PostGIS frente a SQLite y memoria) y una persona externa no consiga arrancar el proyecto. | Actualizar el README con los requisitos reales antes de la primera publicación (prioridad 2). |
+| Que el proyecto dependa de muy pocas personas para atender issues y revisar PRs, y las primeras contribuciones se queden sin respuesta. | Designar responsables y repartir la revisión entre varias personas del equipo (prioridad 3). |
