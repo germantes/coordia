@@ -1,105 +1,54 @@
-# COORDIA · Preparación Técnica para Código Abierto
+# technical-readiness.md (Equipo B) — COORDIA
 
-**Equipo B · Preparación técnica**
+Base: revisión en solo lectura del repo `germantes/coordia` (privado, rama por defecto) vía API de GitHub el 23-nov-2026. Nada se ha modificado.
 
-> **Documento de auditoría técnica, seguridad de secretos, dependencias y reproducibilidad**  
-> **Versión**: 1.0  
-> **Fecha**: 23 de noviembre de 2026  
-> **Ámbito**: Monorepo `coordia` (`frontend/`, `backend/`, `.github/`)
+## Qué se ha podido y no se ha podido ver
+- Visto: README, `package.json` (raíz, backend, frontend), `ci.yml`, `.gitignore`, `database.ts`, `index.ts`, `middleware/auth.ts`, `routes/auth.ts`, `auth/password.ts`, `auth/store.ts`, índice de ~69 ficheros, 20 PRs.
+- Verificado por el equipo el 23-nov-2026 (ejecución local): `gitleaks detect --log-opts="--all"` sobre 48 commits, sin fugas; `npm audit --omit=dev --audit-level=high` en la raíz, 0 vulnerabilidades.
+- Licencias de producción (license-checker en `backend/` y `frontend/`): solo MIT, ISC y BSD-2; el único "UNLICENSED" es el propio paquete, por falta de `LICENSE`. `npm audit` completo: 0 vulnerabilidades.
+- Builds: `frontend` compila (vite 8.3.7 resuelve, versión validada); `backend` compila con `tsc` desde la raíz tras `npm ci`.
+- **Fallo confirmado**: tras `npm ci --omit=dev`, `npm start -w backend` falla con `ERR_MODULE_NOT_FOUND: jsonwebtoken` (importado en `dist/middleware/auth.js`). Una instalación de producción no arranca: hay dependencias de ejecución que solo están en devDependencies (`jsonwebtoken` y, según el análisis del código, `@casl/ability`). Acción: moverlas a `dependencies` y repetir la prueba.
+- Ajustes de GitHub: creado el 23-nov un ruleset sobre `main` (PR obligatorio con 1 aprobación, sin force push ni borrado). Pendiente de añadir el job de CI como check obligatorio cuando haya corrido en un PR. Secret scanning de GitHub no disponible en el repo privado (no aparece en Advanced Security); se cubre con gitleaks en CI. Dependabot: se recomienda activarlo (Settings → Advanced Security); estado por confirmar.
 
----
+## 1. Estructura
+Monorepo npm workspaces: `frontend/` (React 18, Vite), `backend/` (Express 4, TypeScript), `docs/`, `.github/workflows/ci.yml`.
+- Decisión: publicar `frontend`, `backend` y `docs/` técnicos (reglas de reportes, roles, confianza).
+- Problema: `docs/control/` (registros y revisiones del Sprint 2) es gestión interna del curso y nombra a personas; `docs/test_edge_cases.py` es un prototipo suelto con nombre de test. Decisión: mover `docs/control/` fuera de la publicación y pasar el prototipo a `backend/tests/` o borrarlo.
+- `.gitignore` menciona `docs-daniil/`: carpeta personal de un compañero. Hay que confirmar que nunca se subió (ver historial).
+- Faltan `LICENSE`, `.env.example`, `SECURITY.md`, `CONTRIBUTING.md` (404 en la raíz).
 
-## 1. Auditoría de Dependencias y Compatibilidad de Licencias
+## 2. Secretos y datos sensibles
+- En el código leído no hay credenciales incrustadas. `.data/` (las bases SQLite con cuentas y sesiones) está en `.gitignore`.
+- `middleware/auth.ts` usa `'insecure-dev-secret'` como valor por defecto de `JWT_SECRET` y solo lo exige si `NODE_ENV=production`. Quien despliegue sin esa variable firma tokens con un secreto público. Decisión: el arranque debe fallar siempre sin `JWT_SECRET` (también en dev, con `.env.example`).
+- Hashes de contraseña Argon2id con salt y parámetros; refresh token en cookie `httpOnly`; límite de intentos por IP y email. Buenas decisiones, se mantienen.
+- Historial: escaneado con gitleaks sobre todas las ramas (48 commits), sin fugas. Se mantiene la recomendación de añadir gitleaks a CI para que siga siendo así. Si apareciera algo en el futuro, rotar la credencial y reescribir historial.
+- Los correos de usuarios de prueba/personas en `docs/control/` y tests deben revisarse (RGPD).
 
-Se ha analizado el árbol completo de dependencias en `backend/package.json` y `frontend/package.json`, asegurando que todas cuenten con versiones bloqueadas en [`package-lock.json`](file:///home/ubuntu/projects/coordia/package-lock.json) y licencias compatibles con **Apache License 2.0**:
+## 3. Dependencias y licencias
+- `jsonwebtoken` está duplicado en `dependencies` y `devDependencies`; `leaflet` está en el backend sin usarse allí (solo frontend).
+- `@casl/ability` está en `devDependencies` pero `middleware/ability.ts` lo importa en ejecución: una instalación de producción (`npm ci --omit=dev`) rompe el backend. Mover a `dependencies`.
+- Versiones que conviene verificar antes de publicar (parecen inexistentes o muy nuevas para lo que aparece en el lockfile/README): `vitest ^5.1.0`, `vite ^8.3.7`, `tsx ^4.23.15`. Comprobar con `npm ls` que resuelven.
+- Express 4 sigue soportado, pero sin plan de migración a 5.
+- Licencias: sin analizar. Acción: `npx license-checker --production --summary` y comprobar que no hay GPL/AGPL incompatibles con la licencia elegida por el Equipo C. Leaflet (BSD-2) y OpenStreetMap (ODbL, atribución obligatoria en el mapa) deben citarse en el README.
 
-| Paquete | Versión declarada | Licencia upstream | Compatibilidad con Apache 2.0 | Uso en COORDIA |
-|---|---|---|---|---|
-| `express` | `^4.18.2` | MIT | Plena | Servidor HTTP y enrutamiento REST en backend |
-| `react` / `react-dom` | `^18.2.0` | MIT | Plena | Biblioteca de interfaz de usuario en frontend |
-| `leaflet` | `^1.9.4` | BSD-2-Clause | Plena | Visualización de mapas y posicionamiento de incidentes |
-| `@casl/ability` | `^6.5.0` | MIT | Plena | Motor de control de acceso basado en atributos y roles (RBAC) |
-| `jsonwebtoken` | `^9.0.2` | MIT | Plena | Emisión y validación de tokens de sesión |
-| `pg` | `^8.11.3` | MIT | Plena | Cliente para PostgreSQL / PostGIS |
-| `cors` | `^2.8.2` | MIT | Plena | Middleware de seguridad de orígenes cruzados |
-| `typescript` | `^5.3.3` | Apache-2.0 | Idéntica | Compilación y comprobación estática de tipos |
-| `vite` | `^8.3.7` | MIT | Plena | Empaquetado y servidor de desarrollo en frontend |
-| `vitest` | `^5.1.0` | MIT | Plena | Ejecutor de pruebas unitarias y de integración |
+## 4. Configuración
+- Variables leídas del entorno: `JWT_SECRET`, `AUTH_DB_PATH`, `REPORT_DB_PATH`, `DISTRIBUTION_INTERVAL_MS`, `FRONTEND_ORIGIN`, `PORT`, `VITE_API_URL`. Ninguna está documentada.
+- **README incoherente con el código**: dice PostgreSQL + PostGIS, pero `database.ts` usa `node:sqlite` (`DatabaseSync`), y `pg` figura como dependencia sin uso aparente. Un colaborador externo montaría Postgres para nada. Decisión: corregir README (SQLite para el MVP) o documentar la migración prevista.
+- Requiere Node >=24.7 (`engines`, `crypto.argon2`, `node:sqlite` experimental). Documentarlo, es una barrera de entrada.
+- README cita Playwright y no hay tests e2e en el repo.
+- Hay una sola base de datos de ficheros sin migraciones versionadas (`CREATE TABLE IF NOT EXISTS`).
 
-### Acciones técnicas tomadas:
-- No se han detectado dependencias bajo licencias copyleft hostiles (GPL/AGPL) que restrinjan la distribución permisiva.
-- El repositorio mantiene el fichero [`package-lock.json`](file:///home/ubuntu/projects/coordia/package-lock.json) versionado en Git para garantizar compilaciones e instalaciones deterministas con `npm ci`.
+## 5. Tests, CI/CD y automatización
+- Tests: ~15 en backend (Vitest + Supertest, incluidos criterios de aceptación HU-01/02/04/07) y 2 en frontend (`session`, `report-form`). El frontend usa `--passWithNoTests`, así que un fallo de cobertura no rompe nada.
+- CI (`ci.yml`): lint (solo `tsc --noEmit`, aunque hay `eslint` instalado), test, build de ambos paquetes en PR y push a `main`.
+- Carencias a cubrir: `actions/checkout@v3` y `setup-node@v3` obsoletos (subir a v4); sin `npm audit`, sin escaneo de secretos, sin Dependabot, sin informe de cobertura, sin permisos mínimos (`permissions: contents: read`); no consta protección de rama en `main` ni revisión obligatoria (no visible).
+- Propuesta mínima: añadir job `security` (gitleaks + `npm audit --omit=dev --audit-level=high`), activar Dependabot, `permissions` de solo lectura y proteger `main` con CI obligatorio.
 
----
+## Tres riesgos técnicos a resolver antes de publicar
+1. **`JWT_SECRET` por defecto público y datos personales en `docs/control/`.** El historial está limpio según gitleaks (48 commits, todas las ramas). Impacto: sesiones falsificables en cualquier despliegue sin variable. Acción: fallar sin `JWT_SECRET`, `.env.example`, retirar `docs/control/` de la publicación. Responsable: Equipo B. Antes de publicar.
+2. **Dependencias y build no reproducibles para un tercero.** `@casl/ability` en devDependencies rompe producción, hay paquetes duplicados o sin uso (`pg`, `leaflet` en backend) y versiones por validar. Además, licencias sin auditar. Acción: corregir `package.json`, `npm ls`, `license-checker`, probar `npm ci --omit=dev && npm run build && npm start` en limpio.
+2b. **Confirmado: la instalación de producción no arranca** (`jsonwebtoken` ausente tras `npm ci --omit=dev`).
+3. **Documentación técnica que contradice el código y barrera de arranque.** README promete PostgreSQL/PostGIS y Playwright, el código es SQLite sin migraciones y Node >=24.7, sin `.env.example`. Un contribuyente no puede levantar el proyecto con confianza. Acción: reescribir sección de instalación, documentar variables, probar el arranque desde cero en una máquina limpia.
 
-## 2. Gestión de Secretos, Credenciales y Ficheros Ignorados
-
-### 2.1 Verificación de secretos en el código
-- Se ha comprobado que el código base no incluye contraseñas, claves privadas de producción ni tokens fijos.
-- La configuración sensible se carga dinámicamente mediante variables de entorno:
-  - `JWT_SECRET`: En desarrollo local utiliza un valor por defecto inocuo (`coordia-dev-secret-do-not-use-in-production`). En producción, la aplicación exige su definición explícita.
-  - `DATABASE_URL` y `PORT`: Configurables mediante variables de entorno estándar.
-
-### 2.2 Política de `.gitignore` y ficheros de entorno
-El archivo [`.gitignore`](file:///home/ubuntu/projects/coordia/.gitignore) salvaguarda la exclusión de ficheros críticos:
-- Archivos `.env` y `.env.*` locales.
-- Directorio de almacenamiento de datos `.data/` y ficheros `*.sqlite`, `*.sqlite-wal`, `*.sqlite-shm`.
-- Directorios `node_modules/`, `dist/` y `.vitest-cache/`.
-
-### 2.3 Plantilla de entorno para colaboradores
-Se incluye un fichero modelo [`.env.example`](file:///home/ubuntu/projects/coordia/.env.example) que permite arrancar el entorno en 1 paso sin exponer credenciales:
-```bash
-# Servidor Backend
-PORT=3000
-NODE_ENV=development
-JWT_SECRET=coordia-dev-secret-local-only-replace-in-prod
-CORS_ORIGIN=http://localhost:5173
-
-# Base de datos (opcional para SQLite local; por defecto usa .data/coordia.sqlite)
-DATABASE_URL=sqlite:.data/coordia.sqlite
-```
-
----
-
-## 3. Arquitectura de Ejecución y Desacoplamiento de Persistencia
-
-### 3.1 Situación actual vs. Documentación heredada
-Existe una incoherencia histórica en la documentación que queda subsanada en esta publicación:
-- **Lo que decía el README preliminar**: Mencionaba instalación obligatoria de PostgreSQL y PostGIS.
-- **La realidad técnica del código en `main`**:
-  - El backend implementa autenticación, cuentas, contraseñas hash y organizaciones en **SQLite** mediante [`backend/src/auth/store.ts`](file:///home/ubuntu/projects/coordia/backend/src/auth/store.ts).
-  - El almacén de reportes, confirmaciones y órdenes de distribución ([`backend/src/models/report.ts`](file:///home/ubuntu/projects/coordia/backend/src/models/report.ts)) también cuenta con persistencia transaccional en **SQLite** (`PRAGMA journal_mode = WAL; busy_timeout = 5000;`).
-  - Los cálculos geométricos de distancia y proximidad métrica se resuelven mediante fórmulas haversine nativas en TypeScript en [`backend/src/validation/report-response.ts`](file:///home/ubuntu/projects/coordia/backend/src/validation/report-response.ts), haciendo que la demo local y las pruebas no dependan del cluster PostgreSQL/PostGIS.
-
-### 3.2 Decisión técnica para la primera release (v0.1.0-alpha)
-1. **Publicar con motor SQLite embebido**: Permite a cualquier evaluador o desarrollador externo arrancar la plataforma en 1 comando (`npm run dev`) sin desplegar dependencias externas pesadas.
-2. **Clarificación explícita en el README**: Dejar documentado que la suite local opera con SQLite embebido (`.data/auth.sqlite` y `.data/reports.sqlite`) y que PostgreSQL + PostGIS constituye la ruta de migración para despliegues de alta concurrencia multiorganismo.
-
----
-
-## 4. Calidad, Automatización y Pipeline de CI
-
-### 4.1 Entorno de ejecución
-- **Node.js**: Motor fijado en `engines: { "node": ">=24.7.0" }`.
-- **Monorepo**: Gestión mediante `npm workspaces` nativo (`npm run lint`, `npm test`, `npm run dev`).
-
-### 4.2 Pipeline de Integración Continua ([`.github/workflows/ci.yml`](file:///home/ubuntu/projects/coordia/.github/workflows/ci.yml))
-En cada Pull Request y push a `main`, el flujo ejecuta automáticamente:
-1. `npm ci --include-workspace-root`
-2. `npm run lint` (verificación de tipado estricto con `tsc --noEmit` en frontend y backend).
-3. `npm test` (ejecución de las 13 suites y 102 pruebas en Vitest).
-4. `npm run build --workspace=frontend` y `npm run build --workspace=backend`.
-
-### 4.3 Aislamiento de pruebas
-Para evitar colisiones de concurrencia y bloqueos de base de datos (*"database is locked"*), cada suite de pruebas unitarias (`hu04-acceptance.test.ts`, etc.) instancia almacenes de base de datos aislados en memoria efímera que se destruyen al finalizar.
-
----
-
-## 5. Riesgos Técnicos y Plan de Mitigación
-
-| Riesgo Técnico | Severidad | Mitigación Implementada / Planificada |
-|---|---|---|
-| **Discrepancia documental PostgreSQL vs SQLite** | Media | Documentado claramente en el README y `.env.example`. La demo local funciona inmediatamente sin infraestructura externa. |
-| **Incompatibilidad de versión de Node** (errores de sintaxis si se usa Node < 24) | Alta | Declaración de `engines` en `package.json` y runner de CI fijo en Node 24. |
-| **Colisiones de bloqueo en SQLite** bajo concurrencia elevada | Media | Activación de WAL mode (`PRAGMA journal_mode = WAL`) y timeout de 5s. Para producción multiciudad se migrará al adaptador PostgreSQL. |
-| **Fuga de datos personales en logs o errores** | Crítica | El middleware de manejo de errores captura excepciones y devuelve mensajes sanitizados sin volcados de traza ni datos sensibles de ciudadanos. |
+## Primera tarea de mañana
+Mover `jsonwebtoken` y `@casl/ability` a `dependencies`, repetir `npm ci --omit=dev && npm start -w backend` y anotar el resultado.
