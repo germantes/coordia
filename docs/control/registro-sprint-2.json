@@ -16,7 +16,7 @@
     "status": "completados",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-20T18:00:39Z",
+    "updated_at_utc": "2026-11-23T16:20:00Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -500,7 +500,7 @@
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -510,7 +510,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-18: completados. T3 de HU-02.",
       "url": "https://app.clickup.com/t/869fc6aht"
     },
     {
@@ -558,7 +558,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -568,7 +568,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-18: completados.",
       "url": "https://app.clickup.com/t/869fc6udf"
     },
     {
@@ -645,7 +645,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -655,7 +655,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero: completados. Implementación en main; decisión PO en revisiones/2026-11-16-hu05-t2.md.",
       "url": "https://app.clickup.com/t/869fc6zwa"
     },
     {
@@ -674,7 +674,7 @@
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -684,7 +684,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Cerrada en Review 23/11 por ausencia de Zehra. Evidencia backend/tests/hu05-acceptance.test.ts.",
       "url": "https://app.clickup.com/t/869fc6zwx"
     },
     {
@@ -732,7 +732,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -742,7 +742,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-18: completados.",
       "url": "https://app.clickup.com/t/869fc71by"
     },
     {
@@ -761,7 +761,7 @@
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -771,7 +771,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-18: completados.",
       "url": "https://app.clickup.com/t/869fc71cd"
     },
     {
@@ -819,7 +819,7 @@
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -829,7 +829,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-18: completados.",
       "url": "https://app.clickup.com/t/869fc767g"
     },
     {
@@ -848,7 +848,7 @@
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -858,7 +858,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Revisor documentado en descripción; campo Revisores no escribible con el plan actual.",
+      "notes": "Cerrada en Review 23/11 por ausencia de Daniil. Evidencia backend/tests/hu11-acceptance.test.ts. Revisor en descripción.",
       "url": "https://app.clickup.com/t/869fc76h6"
     },
     {
@@ -906,7 +906,7 @@
       "start": "2026-11-09",
       "due": "2026-11-23",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -916,7 +916,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Serie d0–d10 completa. El 23/11 es Review, no corte de burndown. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2b"
     },
     {
@@ -935,7 +935,7 @@
       "start": "2026-11-09",
       "due": "2026-11-23",
       "milestone": "CTRL",
-      "status": "en curso",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -945,7 +945,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-17T18:00:21Z: en curso. Tarea de control con ventana propia.",
+      "notes": "Estado en tablero: completados. 0 DEF urgentes. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2c"
     },
     {
@@ -964,7 +964,7 @@
       "start": "2026-11-10",
       "due": "2026-11-17",
       "milestone": "CTRL",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -974,7 +974,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-17T18:00:21Z: en revisión. Tarea de control con ventana propia.",
+      "notes": "Estado en tablero: completados. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2d"
     },
     {
@@ -993,7 +993,7 @@
       "start": "2026-11-16",
       "due": "2026-11-16",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -1003,7 +1003,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Estado en tablero: completados. Acta en revisiones/2026-11-18.md. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2e"
     },
     {
@@ -1022,7 +1022,7 @@
       "start": "2026-11-11",
       "due": "2026-11-23",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -1032,7 +1032,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Informes en docs/control/informes/. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2f"
     },
     {
@@ -1051,7 +1051,7 @@
       "start": "2026-11-23",
       "due": "2026-11-23",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -1061,7 +1061,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Cierre en docs/control/cierre-sprint-2.md. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2g"
     }
   ],
@@ -1141,12 +1141,19 @@
     "baseline_B0_h": 158.0,
     "N0": 6,
     "people": 9,
-    "open_remaining_h": 36.5,
+    "open_remaining_h": 0,
     "logged_hours": 37.61,
     "blocked_tasks": 0,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "2.2",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-23",
+      "change": "Review: 6/6 HU aceptadas. HU-05 · T3 y HU-11 · T3 ejecutadas por ausencia. CTRL-2, CTRL-6 y CTRL-7 cerrados. Restante hoja 0 h. No se crea LB-S2-v2.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "2.1",
       "baseline": "LB-S2-v1",
@@ -1231,5 +1238,17 @@
       "change": "Creación del Doc canónico: línea base, d0, 7 indicadores, auditoría de 25 tareas (18 HU + 7 CTRL). Los xlsx quedan como snapshots.",
       "author": "Alejandro Cerezo Contreras (asistido por agente)"
     }
-  ]
+  ],
+  "review": {
+    "date": "2026-11-23",
+    "label": "Sprint Review y cierre CTRL",
+    "open_remaining_h": 0.0,
+    "hu_accepted": 6,
+    "hours_accepted_h": 144.5,
+    "blocked_tasks": 0,
+    "block_days": 2,
+    "critical_defects": 0,
+    "logged_hours": 37.61,
+    "notes": "Review 23/11. Se cierran HU-05 · T3 y HU-11 · T3 (ausencias) y CTRL-2, CTRL-6 y CTRL-7. 6 HU aceptadas con evidencia de pruebas. No es corte d11 de burndown."
+  }
 }

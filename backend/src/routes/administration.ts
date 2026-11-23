@@ -97,9 +97,16 @@ export function administrationRouter(store: AuthStore) {
       });
     }
 
-    const updated = store.updateAccount(req.params.id, validation.data);
+    const updated = store.updateAccount(req.params.id, validation.data, req.user?.id);
     if (!updated) return res.status(404).json({ error: 'Usuario no encontrado' });
     return res.json(updated);
+  });
+
+  router.get('/users/:id/audit', checkAbility('read', 'User'), (req, res) => {
+    if (!store.accountById(req.params.id)) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+    return res.json(store.accountAudit(req.params.id));
   });
 
   const revokeSessionsHandler = (req: Request, res: Response) => {
