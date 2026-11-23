@@ -1,1 +1,0 @@
-docs/community-readiness.md
