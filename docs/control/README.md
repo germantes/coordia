@@ -7,5 +7,7 @@ Desde el 10/11/2026 la documentación de control vive en este directorio. El Doc
 | [`registro-sprint-2.json`](registro-sprint-2.json) | Fuente máquina. Línea base `LB-S2-v1`, cortes diarios e indicadores. |
 | [`registro-sprint-2.md`](registro-sprint-2.md) | La misma información para lectura humana. El bloque §7 tiene que coincidir con el JSON. |
 | [`revisiones/`](revisiones/) | Revisiones de tareas y decisiones de producto. |
+| [`informes/`](informes/) | Informes intermedio y final (CTRL-6). |
+| [`cierre-sprint-2.md`](cierre-sprint-2.md) | Cierre de indicadores y propuesta para el Sprint 3 (CTRL-7). |
 
 Para un corte nuevo: editar el JSON, regenerar las tablas del markdown en el mismo cambio y comprobar las invariantes del §6.4.

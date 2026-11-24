@@ -16,7 +16,7 @@
     "status": "completados",
     "doc_version": "LB-S2-v1",
     "schema_version": "1.1",
-    "updated_at_utc": "2026-11-20T18:00:39Z",
+    "updated_at_utc": "2026-11-24T12:56:37.672Z",
     "timezone": "Europe/Madrid",
     "canonical": "repo:docs/control/registro-sprint-2.json",
     "snapshots": [
@@ -38,7 +38,7 @@
     "sprint_start": "2026-11-09",
     "sprint_end": "2026-11-20",
     "sprint_boundary": "2026-11-23",
-    "B0_h": 158.0,
+    "B0_h": 158,
     "H0_h": 144.5,
     "control_h": 13.5,
     "N0": 6,
@@ -46,10 +46,10 @@
     "capacity_per_person_h": 18.7,
     "capacity_derivation": "168 h / 9 = 18,67 ≈ 18,7 (180 − 12 de reuniones)",
     "capacity_caveat": "Referencia de línea base; M-7 usa capacidad restante declarada, no 18,7 fijo.",
-    "total_capacity_h": 180.0,
-    "meetings_h": 12.0,
-    "contingency_h": 9.0,
-    "uncommitted_h": 1.0,
+    "total_capacity_h": 180,
+    "meetings_h": 12,
+    "contingency_h": 9,
+    "uncommitted_h": 1,
     "points": 42,
     "points_note": "Declarados en la lista; no verificados individualmente. No convertir a horas.",
     "scope": [
@@ -62,8 +62,8 @@
     ],
     "removed": "HU-16 · T1 (9,5 h) vuelve al Backlog",
     "accepted_definition": "Estado Completados + criterios vigentes con evidencia + DoD + 0 defectos críticos; «En revisión» no cuenta.",
-    "corrected_capacity_h": 108.0,
-    "deficit_h": 50.0,
+    "corrected_capacity_h": 108,
+    "deficit_h": 50,
     "deficit_note": "158 − 108; eventos P6; decisión pendiente en CTRL-4 (10/11)."
   },
   "daily": [
@@ -71,16 +71,16 @@
       "date": "2026-11-09",
       "cut": "d0",
       "label": "antes de trabajar",
-      "ideal_h": 158.0,
-      "real_h": 158.0,
-      "deviation_h": 0.0,
-      "deviation_pct": 0.0,
+      "ideal_h": 158,
+      "real_h": 158,
+      "deviation_h": 0,
+      "deviation_pct": 0,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 0,
       "block_days": 0,
       "critical_defects": 0,
-      "logged_hours": 0.0,
+      "logged_hours": 0,
       "notes": "Línea base congelada LB-S2-v1, antes de trabajar. 25 tareas hoja abiertas, 0 HU aceptadas. Las 1,25 h de CTRL-1 se registraron por la tarde y se imputan en d1."
     },
     {
@@ -88,11 +88,11 @@
       "cut": "d1",
       "label": "cierre",
       "ideal_h": 142.2,
-      "real_h": 158.0,
+      "real_h": 158,
       "deviation_h": 15.8,
-      "deviation_pct": 10.0,
+      "deviation_pct": 10,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 0,
       "block_days": 0,
       "critical_defects": 0,
@@ -104,11 +104,11 @@
       "cut": "d2",
       "label": "cierre",
       "ideal_h": 126.4,
-      "real_h": 153.0,
+      "real_h": 153,
       "deviation_h": 26.6,
       "deviation_pct": 16.8,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 0,
       "block_days": 0,
       "critical_defects": 0,
@@ -120,11 +120,11 @@
       "cut": "d3",
       "label": "cierre",
       "ideal_h": 110.6,
-      "real_h": 148.0,
+      "real_h": 148,
       "deviation_h": 37.4,
       "deviation_pct": 23.7,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 0,
       "block_days": 0,
       "critical_defects": 0,
@@ -136,11 +136,11 @@
       "cut": "d4",
       "label": "cierre",
       "ideal_h": 94.8,
-      "real_h": 133.0,
+      "real_h": 133,
       "deviation_h": 38.2,
       "deviation_pct": 24.2,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 1,
       "block_days": 1,
       "critical_defects": 0,
@@ -151,12 +151,12 @@
       "date": "2026-11-13",
       "cut": "d5",
       "label": "cierre",
-      "ideal_h": 79.0,
-      "real_h": 115.0,
-      "deviation_h": 36.0,
+      "ideal_h": 79,
+      "real_h": 115,
+      "deviation_h": 36,
       "deviation_pct": 22.8,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 1,
       "block_days": 2,
       "critical_defects": 0,
@@ -168,11 +168,11 @@
       "cut": "d6",
       "label": "cierre",
       "ideal_h": 63.2,
-      "real_h": 105.0,
+      "real_h": 105,
       "deviation_h": 41.8,
       "deviation_pct": 26.5,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 0,
       "block_days": 2,
       "critical_defects": 0,
@@ -186,9 +186,9 @@
       "ideal_h": 47.4,
       "real_h": 88.5,
       "deviation_h": 41.1,
-      "deviation_pct": 26.0,
+      "deviation_pct": 26,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 0,
       "block_days": 2,
       "critical_defects": 0,
@@ -204,7 +204,7 @@
       "deviation_h": 11.9,
       "deviation_pct": 7.5,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 0,
       "block_days": 2,
       "critical_defects": 0,
@@ -220,7 +220,7 @@
       "deviation_h": 20.7,
       "deviation_pct": 13.1,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 0,
       "block_days": 2,
       "critical_defects": 0,
@@ -231,17 +231,49 @@
       "date": "2026-11-20",
       "cut": "d10",
       "label": "cierre",
-      "ideal_h": 0.0,
+      "ideal_h": 0,
       "real_h": 36.5,
       "deviation_h": 36.5,
       "deviation_pct": 23.1,
       "hu_accepted": 0,
-      "hours_accepted_h": 0.0,
+      "hours_accepted_h": 0,
       "blocked_tasks": 0,
       "block_days": 2,
       "critical_defects": 0,
       "logged_hours": 37.61,
       "notes": "Cierre 20/11 19:00 Europe/Madrid, último día laborable. KPI-2 = 23,1 % (rojo). Restante 36,5 h y ninguna tarea completada durante el día. Siguen abiertas HU-05 · T2 (12 h, en revisión), la T3 de HU-11 (7 h, sprint backlog, sin empezar), la T3 de HU-05 (7 h, en curso desde hoy) y CTRL-2, CTRL-3, CTRL-5, CTRL-6 y CTRL-7 (10,5 h). 0 bloqueos, 0 críticos, 0 HU aceptadas. El 23/11 es la Review."
+    },
+    {
+      "date": "2026-11-23",
+      "cut": "d11",
+      "label": "Review",
+      "ideal_h": 0,
+      "real_h": 0,
+      "deviation_h": 0,
+      "deviation_pct": 0,
+      "hu_accepted": 6,
+      "hours_accepted_h": 144.5,
+      "blocked_tasks": 0,
+      "block_days": 2,
+      "critical_defects": 0,
+      "logged_hours": 37.61,
+      "notes": "Review 23/11 19:00 Europe/Madrid. Sprint 2 cerrado: 6/6 HU aceptadas, 25/25 tareas hoja completadas. CTRL-2, CTRL-3, CTRL-5, CTRL-6 y CTRL-7 cerradas. 0 bloqueos, 0 críticos."
+    },
+    {
+      "date": "2026-11-24",
+      "cut": "d12",
+      "label": "cierre",
+      "ideal_h": 0,
+      "real_h": 0,
+      "deviation_h": 0,
+      "deviation_pct": 0,
+      "hu_accepted": 6,
+      "hours_accepted_h": 144.5,
+      "blocked_tasks": 0,
+      "block_days": 2,
+      "critical_defects": 0,
+      "logged_hours": 37.61,
+      "notes": "Cierre 24/11 13:54 Europe/Madrid. Sprint 2 cerrado: 32/32 tareas en completados. PR #29 asignada a revisor DVerdeV. No hay tareas abiertas."
     }
   ],
   "indicators": [
@@ -380,7 +412,7 @@
         "María del Mar Madrid Delgado"
       ],
       "reviewer_source": "field",
-      "estimate_h": 14.0,
+      "estimate_h": 14,
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
@@ -438,7 +470,7 @@
         "María del Mar Madrid Delgado"
       ],
       "reviewer_source": "field",
-      "estimate_h": 4.0,
+      "estimate_h": 4,
       "start": "2026-11-09",
       "due": "2026-11-11",
       "milestone": "H1",
@@ -467,7 +499,7 @@
         "Damián Verde"
       ],
       "reviewer_source": "field",
-      "estimate_h": 12.0,
+      "estimate_h": 12,
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
@@ -496,11 +528,11 @@
         "Germán Torres Tendero"
       ],
       "reviewer_source": "field",
-      "estimate_h": 5.0,
+      "estimate_h": 5,
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -510,7 +542,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-18: completados. T3 de HU-02.",
       "url": "https://app.clickup.com/t/869fc6aht"
     },
     {
@@ -525,7 +557,7 @@
         "Vicente Durán Morales"
       ],
       "reviewer_source": "field",
-      "estimate_h": 5.0,
+      "estimate_h": 5,
       "start": "2026-11-09",
       "due": "2026-11-11",
       "milestone": "H1",
@@ -554,11 +586,11 @@
         "Germán Torres Tendero"
       ],
       "reviewer_source": "field",
-      "estimate_h": 9.0,
+      "estimate_h": 9,
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -568,7 +600,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-18: completados.",
       "url": "https://app.clickup.com/t/869fc6udf"
     },
     {
@@ -583,7 +615,7 @@
         "Damián Verde"
       ],
       "reviewer_source": "field",
-      "estimate_h": 5.0,
+      "estimate_h": 5,
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
@@ -641,11 +673,11 @@
         "Fernando Bravo Torres"
       ],
       "reviewer_source": "field",
-      "estimate_h": 12.0,
+      "estimate_h": 12,
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -655,7 +687,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero: completados. Implementación en main; decisión PO en revisiones/2026-11-16-hu05-t2.md.",
       "url": "https://app.clickup.com/t/869fc6zwa"
     },
     {
@@ -670,11 +702,11 @@
         "Vicente Durán Morales"
       ],
       "reviewer_source": "field",
-      "estimate_h": 7.0,
+      "estimate_h": 7,
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -684,7 +716,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Cerrada en Review 23/11 por ausencia de Zehra. Evidencia backend/tests/hu05-acceptance.test.ts.",
       "url": "https://app.clickup.com/t/869fc6zwx"
     },
     {
@@ -699,7 +731,7 @@
         "María del Mar Madrid Delgado"
       ],
       "reviewer_source": "field",
-      "estimate_h": 5.0,
+      "estimate_h": 5,
       "start": "2026-11-09",
       "due": "2026-11-11",
       "milestone": "H1",
@@ -728,11 +760,11 @@
         "Damián Verde"
       ],
       "reviewer_source": "field",
-      "estimate_h": 16.0,
+      "estimate_h": 16,
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -742,7 +774,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-18: completados.",
       "url": "https://app.clickup.com/t/869fc71by"
     },
     {
@@ -757,11 +789,11 @@
         "Laura"
       ],
       "reviewer_source": "field",
-      "estimate_h": 7.0,
+      "estimate_h": 7,
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -771,7 +803,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "",
+      "notes": "Estado en tablero el 2026-11-18: completados.",
       "url": "https://app.clickup.com/t/869fc71cd"
     },
     {
@@ -786,7 +818,7 @@
         "Alejandro Cerezo Contreras"
       ],
       "reviewer_source": "field",
-      "estimate_h": 5.0,
+      "estimate_h": 5,
       "start": "2026-11-09",
       "due": "2026-11-11",
       "milestone": "H1",
@@ -815,11 +847,11 @@
         "Germán Torres Tendero"
       ],
       "reviewer_source": "field",
-      "estimate_h": 14.0,
+      "estimate_h": 14,
       "start": "2026-11-12",
       "due": "2026-11-17",
       "milestone": "H2",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -829,7 +861,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-16T18:00:21Z: en revisión.",
+      "notes": "Estado en tablero el 2026-11-18: completados.",
       "url": "https://app.clickup.com/t/869fc767g"
     },
     {
@@ -844,11 +876,11 @@
         "Fernando Bravo Torres"
       ],
       "reviewer_source": "description",
-      "estimate_h": 7.0,
+      "estimate_h": 7,
       "start": "2026-11-18",
       "due": "2026-11-19",
       "milestone": "H3",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -858,7 +890,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Revisor documentado en descripción; campo Revisores no escribible con el plan actual.",
+      "notes": "Cerrada en Review 23/11 por ausencia de Daniil. Evidencia backend/tests/hu11-acceptance.test.ts. Revisor en descripción.",
       "url": "https://app.clickup.com/t/869fc76h6"
     },
     {
@@ -873,7 +905,7 @@
         "Damián Verde"
       ],
       "reviewer_source": "field",
-      "estimate_h": 2.0,
+      "estimate_h": 2,
       "start": "2026-11-09",
       "due": "2026-11-09",
       "milestone": "CTRL",
@@ -906,7 +938,7 @@
       "start": "2026-11-09",
       "due": "2026-11-23",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -916,7 +948,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Serie d0–d10 completa. El 23/11 es Review, no corte de burndown. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2b"
     },
     {
@@ -931,11 +963,11 @@
         "Alejandro Cerezo Contreras"
       ],
       "reviewer_source": "field",
-      "estimate_h": 2.0,
+      "estimate_h": 2,
       "start": "2026-11-09",
       "due": "2026-11-23",
       "milestone": "CTRL",
-      "status": "en curso",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -945,7 +977,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-17T18:00:21Z: en curso. Tarea de control con ventana propia.",
+      "notes": "Estado en tablero: completados. 0 DEF urgentes. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2c"
     },
     {
@@ -960,11 +992,11 @@
         "Alejandro Cerezo Contreras"
       ],
       "reviewer_source": "field",
-      "estimate_h": 1.0,
+      "estimate_h": 1,
       "start": "2026-11-10",
       "due": "2026-11-17",
       "milestone": "CTRL",
-      "status": "en revisión",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -974,7 +1006,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Estado en tablero el 2026-11-17T18:00:21Z: en revisión. Tarea de control con ventana propia.",
+      "notes": "Estado en tablero: completados. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2d"
     },
     {
@@ -993,7 +1025,7 @@
       "start": "2026-11-16",
       "due": "2026-11-16",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -1003,7 +1035,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Estado en tablero: completados. Acta en revisiones/2026-11-18.md. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2e"
     },
     {
@@ -1022,7 +1054,7 @@
       "start": "2026-11-11",
       "due": "2026-11-23",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -1032,7 +1064,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Informes en docs/control/informes/. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2f"
     },
     {
@@ -1047,11 +1079,11 @@
         "Fernando Bravo Torres"
       ],
       "reviewer_source": "field",
-      "estimate_h": 2.0,
+      "estimate_h": 2,
       "start": "2026-11-23",
       "due": "2026-11-23",
       "milestone": "CTRL",
-      "status": "sprint backlog",
+      "status": "completados",
       "checks": {
         "assignee": true,
         "reviewer": true,
@@ -1061,7 +1093,7 @@
         "due": true
       },
       "checks_ok": true,
-      "notes": "Tarea de control con ventana propia.",
+      "notes": "Cierre en docs/control/cierre-sprint-2.md. Tarea de control con ventana propia.",
       "url": "https://app.clickup.com/t/1ammuym2b2g"
     }
   ],
@@ -1129,7 +1161,7 @@
     "audit_rows": 25,
     "hu_subtasks": 18,
     "ctrl_tasks": 7,
-    "sum_estimate_h": 158.0,
+    "sum_estimate_h": 158,
     "sum_hu_estimate_h": 144.5,
     "sum_ctrl_estimate_h": 13.5,
     "all_leaf_have_assignee": true,
@@ -1138,15 +1170,22 @@
     "all_hu_reviewers_defined": true,
     "all_hu_reviewers_differ": true,
     "hu02_all_sprint_backlog": false,
-    "baseline_B0_h": 158.0,
+    "baseline_B0_h": 158,
     "N0": 6,
     "people": 9,
-    "open_remaining_h": 36.5,
+    "open_remaining_h": 0,
     "logged_hours": 37.61,
     "blocked_tasks": 0,
     "critical_defects": 0
   },
   "changelog": [
+    {
+      "version": "2.2",
+      "baseline": "LB-S2-v1",
+      "date": "2026-11-23",
+      "change": "Review: 6/6 HU aceptadas. HU-05 · T3 y HU-11 · T3 ejecutadas por ausencia. CTRL-2, CTRL-6 y CTRL-7 cerrados. Restante hoja 0 h. No se crea LB-S2-v2.",
+      "author": "Alejandro Cerezo Contreras"
+    },
     {
       "version": "2.1",
       "baseline": "LB-S2-v1",
@@ -1231,5 +1270,17 @@
       "change": "Creación del Doc canónico: línea base, d0, 7 indicadores, auditoría de 25 tareas (18 HU + 7 CTRL). Los xlsx quedan como snapshots.",
       "author": "Alejandro Cerezo Contreras (asistido por agente)"
     }
-  ]
+  ],
+  "review": {
+    "date": "2026-11-23",
+    "label": "Sprint Review y cierre CTRL",
+    "open_remaining_h": 0,
+    "hu_accepted": 6,
+    "hours_accepted_h": 144.5,
+    "blocked_tasks": 0,
+    "block_days": 2,
+    "critical_defects": 0,
+    "logged_hours": 37.61,
+    "notes": "Review 23/11. Se cierran HU-05 · T3 y HU-11 · T3 (ausencias) y CTRL-2, CTRL-6 y CTRL-7. 6 HU aceptadas con evidencia de pruebas. No es corte d11 de burndown."
+  }
 }

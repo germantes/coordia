@@ -47,6 +47,16 @@ export class AuthStore {
       );
       CREATE TABLE IF NOT EXISTS attempts (bucket TEXT NOT NULL, time INTEGER NOT NULL);
       CREATE INDEX IF NOT EXISTS attempts_bucket_time ON attempts(bucket, time);
+      CREATE TABLE IF NOT EXISTS account_audit (
+        id TEXT PRIMARY KEY,
+        targetUserId TEXT NOT NULL,
+        actorUserId TEXT NOT NULL,
+        field TEXT NOT NULL,
+        previous TEXT,
+        next TEXT,
+        changedAt TEXT NOT NULL
+      );
+      CREATE INDEX IF NOT EXISTS account_audit_by_target ON account_audit(targetUserId, changedAt);
     `);
   }
 
@@ -117,6 +127,7 @@ export class AuthStore {
   updateAccount(
     id: string,
     changes: { displayName?: string; role?: User['role']; organizationId?: string | null; revokeSessions?: boolean },
+    actorUserId?: string,
   ): User | null {
     return this.transaction(() => {
       const row = this.db.prepare('SELECT userJson FROM accounts WHERE id = ?').get(id);
@@ -132,6 +143,27 @@ export class AuthStore {
       this.db.prepare('UPDATE accounts SET userJson = ? WHERE id = ?')
         .run(JSON.stringify(updatedUser), id);
 
+      if (actorUserId) {
+        const changedAt = new Date().toISOString();
+        const insert = this.db.prepare(
+          'INSERT INTO account_audit VALUES (?, ?, ?, ?, ?, ?, ?)',
+        );
+        if (current.role !== updatedUser.role) {
+          insert.run(randomUUID(), id, actorUserId, 'role', current.role, updatedUser.role, changedAt);
+        }
+        if ((current.organizationId ?? null) !== (updatedUser.organizationId ?? null)) {
+          insert.run(
+            randomUUID(),
+            id,
+            actorUserId,
+            'organizationId',
+            current.organizationId ?? null,
+            updatedUser.organizationId ?? null,
+            changedAt,
+          );
+        }
+      }
+
       if (changes.revokeSessions === true) {
         this.revokeSessionsForUser(id);
       } else {
@@ -139,6 +171,20 @@ export class AuthStore {
       }
       return updatedUser;
     });
+  }
+
+  accountAudit(targetUserId: string) {
+    return this.db.prepare(
+      'SELECT id, targetUserId, actorUserId, field, previous, next, changedAt FROM account_audit WHERE targetUserId = ? ORDER BY rowid',
+    ).all(targetUserId).map((row) => ({
+      id: String(row.id),
+      targetUserId: String(row.targetUserId),
+      actorUserId: String(row.actorUserId),
+      field: String(row.field) as 'role' | 'organizationId',
+      previous: row.previous == null ? null : String(row.previous),
+      next: row.next == null ? null : String(row.next),
+      changedAt: String(row.changedAt),
+    }));
   }
 
   revokeUserSessions(userId: string): number {
